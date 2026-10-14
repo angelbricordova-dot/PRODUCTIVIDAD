@@ -151,14 +151,17 @@ export const useStore = create<Store>()(
         if (!opts?.silent) ui.toast({ title: e.label, xp: e.xp, coins, tone: 'xp' })
         if (afterLevel > beforeLevel) {
           const t = titleFor(afterLevel)
+          const newTitle = titleFor(beforeLevel).title !== t.title
           playLevelUp()
           haptic('success')
           ui.celebrate({
             kind: 'level',
             level: afterLevel,
             title: `¡Nivel ${afterLevel}!`,
-            subtitle: `Ahora eres ${t.title} ${t.emoji}. Sigue así, ${s.profile.name}.`,
-            emoji: t.emoji,
+            subtitle: newTitle
+              ? `Nuevo título: ${t.title} ${t.emoji}. Te lo has ganado, ${s.profile.name}.`
+              : `Un paso más cerca de ${t.nextAt ? `tu próximo título (nivel ${t.nextAt})` : 'la leyenda'}. Sigue así, ${s.profile.name}.`,
+            emoji: newTitle ? t.emoji : '⭐️',
           })
         } else if (e.areaId) {
           const afterArea = levelFromXp(((areaXp(s.events)[e.areaId] ?? 0) + e.xp) / AREA_SCALE)
@@ -212,8 +215,11 @@ export const useStore = create<Store>()(
 
       setHabitCount: (id, day, value) => {
         const s = get()
-        const h = s.habits.find((x) => x.id === id)
-        if (!h) return
+        const found = s.habits.find((x) => x.id === id)
+        if (!found) return
+        // Registrar un día anterior a la creación del hábito adelanta su fecha de inicio.
+        const h = day < found.createdAt ? { ...found, createdAt: day } : found
+        if (h !== found) set({ habits: s.habits.map((x) => (x.id === id ? h : x)) })
         const wasDone = isDone(h, s.logs, day)
         const dayLog = { ...(s.logs[day] ?? {}) }
         if (value <= 0) delete dayLog[id]
@@ -434,7 +440,9 @@ export const useStore = create<Store>()(
       unlockAchievement: (id, title, emoji, xp) => {
         if (get().achievements[id]) return
         set((s) => ({ achievements: { ...s.achievements, [id]: Date.now() } }))
-        useUI.getState().celebrate({ kind: 'achievement', title: 'Logro desbloqueado', subtitle: title, emoji })
+        // Los logros grandes merecen pantalla completa; los pequeños, un aviso que no interrumpe.
+        if (xp >= 100) useUI.getState().celebrate({ kind: 'achievement', title: 'Logro desbloqueado', subtitle: title, emoji })
+        else useUI.getState().toast({ title: `Logro: ${title}`, subtitle: xp ? `+${xp} XP` : undefined, emoji, tone: 'achievement' })
         get().award({ date: get().today(), xp, source: 'achievement', label: `Logro: ${title}`, ref: `ach:${id}` }, { silent: true })
       },
 

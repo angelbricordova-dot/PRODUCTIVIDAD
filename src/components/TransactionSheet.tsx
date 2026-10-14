@@ -48,7 +48,7 @@ export function TransactionSheet({ open, onClose }: { open: boolean; onClose: ()
 
   const symbol = (() => {
     try {
-      return new Intl.NumberFormat('es', { style: 'currency', currency }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? currency
+      return new Intl.NumberFormat('es-US', { style: 'currency', currency, currencyDisplay: 'narrowSymbol' }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? currency
     } catch {
       return currency
     }

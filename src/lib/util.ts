@@ -27,9 +27,10 @@ export function seeded(seed: string): () => number {
 
 export function money(n: number, currency: string, compact = false): string {
   try {
-    return new Intl.NumberFormat('es', {
+    return new Intl.NumberFormat(currency === 'EUR' ? 'es-ES' : 'es-US', {
       style: 'currency',
       currency,
+      currencyDisplay: 'narrowSymbol',
       maximumFractionDigits: compact || Math.abs(n) >= 1000 ? 0 : 2,
       minimumFractionDigits: 0,
     }).format(n)

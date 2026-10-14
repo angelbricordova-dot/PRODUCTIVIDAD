@@ -23,6 +23,7 @@ export function Finance() {
   const [goalEdit, setGoalEdit] = useState<SavingsGoal | null>(null)
   const [depositFor, setDepositFor] = useState<SavingsGoal | null>(null)
   const [confirm, setConfirm] = useState<string | null>(null)
+  const [allCats, setAllCats] = useState(false)
 
   const month = monthKey(today)
   const prevMonth = monthKey(addDays(`${month}-01`, -1))
@@ -55,7 +56,9 @@ export function Finance() {
   })()
 
   const recent = [...tx].sort((a, b) => b.date.localeCompare(a.date) || b.ts - a.ts).slice(0, 20)
-  const expenseCats = categories.filter((c) => c.kind === 'expense').sort((a, b) => (byCat[b.id] ?? 0) - (byCat[a.id] ?? 0))
+  const sortedCats = categories.filter((c) => c.kind === 'expense').sort((a, b) => (byCat[b.id] ?? 0) - (byCat[a.id] ?? 0) || b.budget - a.budget)
+  const activeCats = sortedCats.filter((c) => byCat[c.id] || c.budget)
+  const expenseCats = allCats || activeCats.length === 0 ? sortedCats : activeCats
 
   return (
     <div>
@@ -103,7 +106,11 @@ export function Finance() {
           <h2 className="section-title">Últimos 14 días</h2>
         </div>
         <div className="card">
-          <Bars data={daily} highlight={today} height={90} format={fmt} />
+          {daily.some((d) => d.value > 0) ? (
+            <Bars data={daily} highlight={today} height={90} format={fmt} />
+          ) : (
+            <p className="small muted center" style={{ padding: '10px 0' }}>Sin gastos registrados en estos días.</p>
+          )}
         </div>
       </section>
 
@@ -149,7 +156,9 @@ export function Finance() {
       <section className="section">
         <div className="section-head">
           <h2 className="section-title">Presupuesto del mes</h2>
-          <span className="small muted">toca para ajustar</span>
+          <button className="section-link" onClick={() => setAllCats((x) => !x)}>
+            {allCats ? 'Solo activas' : 'Ver todas'}
+          </button>
         </div>
         <div className="list">
           {expenseCats.map((c) => {

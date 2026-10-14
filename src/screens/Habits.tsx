@@ -44,14 +44,14 @@ export function Habits() {
         <div className="stat-tile row">
           <Ring value={rate7} size={46} stroke={5} />
           <div>
-            <span>Últimos 7 días</span>
+            <span>7 días</span>
             <b style={{ fontSize: 22 }}>{Math.round(rate7 * 100)}%</b>
           </div>
         </div>
         <div className="stat-tile row">
           <Ring value={rate30} size={46} stroke={5} />
           <div>
-            <span>Últimos 30 días</span>
+            <span>30 días</span>
             <b style={{ fontSize: 22 }}>{Math.round(rate30 * 100)}%</b>
           </div>
         </div>

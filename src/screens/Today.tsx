@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { Play, Flame, Wind, Timer, Receipt, Smile, Plus, Moon, ShieldCheck, ChevronRight } from 'lucide-react'
 import { useStore } from '../store'
 import { useUI } from '../store/ui'
@@ -25,9 +25,9 @@ const ORDER: Record<string, TimeOfDay[]> = {
   night: ['evening', 'anytime', 'morning', 'afternoon'],
 }
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 14 },
-  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: 0.04 * i, duration: 0.5, ease: [0.23, 1, 0.32, 1] } }),
+  show: (i: number) => ({ opacity: 1, y: 0, transition: { delay: 0.04 * i, duration: 0.5, ease: [0.23, 1, 0.32, 1] as const } }),
 }
 
 export function Today() {
@@ -110,13 +110,13 @@ export function Today() {
               <Flame size={18} style={{ verticalAlign: '-2px', marginRight: 2 }} />
               {streak.current}
             </b>
-            <span>{streak.atRisk ? '¡Recupérala hoy!' : 'días de racha'}</span>
+            <span>{streak.atRisk ? '¡Recupérala hoy!' : streak.current === 1 ? 'día de racha' : 'días de racha'}</span>
           </button>
           <button className="hud-stat" onClick={() => setTab('habitos')}>
-            <Ring value={stats.ratio} size={40} stroke={5}>
-              <span className="tiny bold num">{Math.round(stats.ratio * 100)}%</span>
+            <Ring value={stats.ratio} size={34} stroke={4}>
+              <span className="bold num" style={{ fontSize: 9.5 }}>{Math.round(stats.ratio * 100)}</span>
             </Ring>
-            <span>de hoy</span>
+            <span>% de hoy</span>
           </button>
           <button className="hud-stat" onClick={() => open({ type: 'shop' })}>
             <b className="row" style={{ gap: 6 }}>

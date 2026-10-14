@@ -41,8 +41,9 @@ function celestial(now: Date) {
   const isSun = h >= 6 && h < 20
   // arco de izquierda a derecha
   const t = isSun ? (h - 6) / 14 : ((h < 6 ? h + 24 : h) - 20) / 10
-  const x = 8 + t * 84
-  const y = 82 - Math.sin(t * Math.PI) * 62
+  // Recorre la mitad derecha del cielo para no tapar el saludo.
+  const x = 76 + t * 18
+  const y = 84 - Math.sin(t * Math.PI) * 50
   return { isSun, x, y }
 }
 
