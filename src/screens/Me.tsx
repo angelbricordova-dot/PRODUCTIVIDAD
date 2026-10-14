@@ -129,7 +129,7 @@ export function Me() {
 
       <section className="section">
         <div className="section-head">
-          <h2 className="section-title">Tu personaje</h2>
+          <h2 className="section-title">Áreas de vida</h2>
           <span className="small muted">nivel por área</span>
         </div>
         <div className="card">

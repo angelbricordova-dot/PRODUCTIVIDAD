@@ -122,7 +122,7 @@ export function Onboarding() {
         </motion.div>
       </AnimatePresence>
 
-      <div style={step === 2 ? { position: 'fixed', left: 0, right: 0, bottom: 0, padding: '14px 22px calc(var(--safe-bottom) + 16px)', background: 'linear-gradient(transparent, var(--bg) 30%)' } : { marginTop: 20 }}>
+      <div style={step === 2 ? { position: 'fixed', left: 0, right: 0, bottom: 0, padding: '14px 22px calc(var(--safe-bottom) + 16px)', background: 'linear-gradient(transparent, var(--paper) 30%)' } : { marginTop: 20 }}>
         <button className="btn primary block" style={step === 0 ? { background: '#fff', color: '#2b1838', boxShadow: '0 4px 0 rgba(0,0,0,0.25)' } : undefined} onClick={go} disabled={step === 2 && picked.length === 0}>
           {step === 0 ? 'Empezar mi aventura' : step === 1 ? 'Continuar' : `Empezar con ${picked.length} hábitos`} <ArrowRight size={18} />
         </button>

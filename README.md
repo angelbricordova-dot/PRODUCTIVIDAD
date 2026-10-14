@@ -1,6 +1,6 @@
 # Alba — tu vida, nivel a nivel
 
-App personal de productividad para **Alejandro Gabriel Lamont Bencomo**. Junta hábitos, diario (bullet journal), finanzas, relaciones y metas en un solo lugar, y lo convierte en un juego: cada paso pequeño da XP y monedas, subes de nivel y canjeas las monedas por recompensas que eliges tú.
+App personal de productividad para **Alejandro Gabriel Lamont Bencomo**. Junta hábitos, diario (bullet journal), relaciones y metas en un solo lugar, y lo convierte en un juego: cada paso pequeño da XP y monedas, subes de nivel y canjeas las monedas por recompensas que eliges tú.
 
 Es una PWA pensada para instalarse en la pantalla de inicio del iPhone. Funciona sin conexión y los datos viven en el dispositivo.
 
@@ -8,16 +8,19 @@ Es una PWA pensada para instalarse en la pantalla de inicio del iPhone. Funciona
 
 | Sección | Funciones |
 |---|---|
-| **Hoy** | Cielo animado según la hora (amanecer, día, atardecer, noche), nivel y XP, racha, % del día, monedas. Misiones diarias, rituales de mañana, tarde y noche, accesos rápidos (ánimo, respirar, enfoque, gasto, hábito), frase del día y día de descanso. |
-| **Modo ritual** | Al estilo Fabulous: recorre los hábitos pendientes uno a uno, con temporizador si tienen duración y confeti al terminar. |
-| **Hábitos** | Plantillas por área, frecuencia diaria, por días o N veces por semana, contadores (vasos, páginas…), dificultad (más XP), disparador "después de…" y "mi porqué". Mapa de calor, rachas, % a 30 días, corrección de días pasados, pausar y ordenar. |
-| **Diario** | Intención del día, ánimo con etiquetas (estilo Daylio), 3 gratitudes, bitácora tipo Bullet Journal (• tarea, ○ evento, – nota, ✱ prioridad, migrar a mañana), reflexión con pregunta guía y revisión semanal. |
-| **Vida → Dinero** | Balance del mes, ingresos y gastos, teclado rápido para registrar, presupuesto por categoría (estilo YNAB), metas de ahorro con aportes, días sin gastar y tasa de ahorro. |
-| **Vida → Gente** | CRM personal: con qué frecuencia quieres hablar con cada persona, quién "toca" contactar, cumpleaños cercanos, notas e historial de llamadas, mensajes y encuentros. |
-| **Vida → Metas** | Metas con hitos, fecha objetivo, área y porqué (+40 XP por hito, +200 por meta). |
-| **Calma** | Respiración guiada (caja 4·4·4·4, 4·7·8, coherencia 5·5) y temporizador de enfoque tipo Pomodoro. |
-| **Yo** | Nivel y títulos (Semilla → Leyenda), radar de áreas de vida (tu "personaje"), XP por día, mapa de constancia, 27 logros, tienda de recompensas, historial y ajustes. |
-| **Ajustes** | Nombre, avatar, lema, tema claro/oscuro/auto, 6 colores de acento, sonidos, hora de inicio del día, moneda, áreas de vida editables, exportar e importar copia de seguridad. |
+| **Hoy** | Cielo animado con Alba, la mascota (un sol que sonríe más cuanto más avanzas; de noche, una luna dormida). Racha, monedas y nivel; deslizador de ánimo con cara animada; rituales de mañana, tarde y noche; misiones diarias; respirar y enfoque. |
+| **Modo ritual** | Recorre los hábitos pendientes uno a uno, con temporizador y confeti al terminar. |
+| **Hábitos y Metas** | Plantillas, frecuencia diaria, por días o N veces por semana, contadores, dificultad, disparador y "mi porqué". Mapa de calor, rachas, corrección de días pasados y **foto como prueba**. Metas con hitos en la misma pestaña. |
+| **Diario** | Intención, ánimo con deslizador, **momentos con fotos y videos**, 3 gratitudes, bitácora tipo Bullet Journal, reflexión guiada y revisión semanal. |
+| **Gente** | Cada cuánto quieres hablar con cada persona, quién "toca" contactar, cumpleaños, notas, historial y **foto de cada persona**. |
+| **Yo** | Ficha de jugador con tu foto, nivel, títulos, radar de áreas de vida, XP, constancia, 26 logros y tienda de recompensas. |
+| **Ajustes** | **8 tipografías** con vista previa, tamaño de letra, tema claro/oscuro/auto, 6 colores, foto de perfil, áreas editables, sonidos y copia de seguridad (incluye fotos). |
+
+### Fotos y videos
+
+- Cada foto se **comprime en el iPhone** antes de guardarse: se redimensiona (1600 px los momentos, 1280 px las pruebas, 512 px los avatares) y se re-codifica en WebP o JPEG. Una foto de 4032×3024 pasa de unos 600 KB a unos 50 KB.
+- Los videos se guardan tal cual, hasta 60 segundos y 80 MB, con portada generada. Safari no permite recomprimir video de forma fiable en el navegador.
+- Todo vive en IndexedDB del dispositivo. No se sube nada a ningún servidor.
 
 ## Decisiones de diseño (lo aprendido de otras apps)
 
@@ -38,14 +41,14 @@ npm test           # pruebas del motor de juego (niveles, rachas, fechas)
 npm run build      # compila a dist/
 ```
 
-Stack: React 19, TypeScript, Vite, Zustand (persistido en IndexedDB), Framer Motion y vite-plugin-pwa.
+Stack: React 19, TypeScript, Vite, Zustand (persistido en IndexedDB), Framer Motion y vite-plugin-pwa. El sistema visual está en `DESIGN.md` y el producto en `PRODUCT.md`.
 
 ```
 src/
   store/        estado, tipos y acciones (único punto que escribe datos)
   lib/          motor de juego: niveles, rachas, misiones, logros, fechas
   components/   piezas reutilizables (hojas, anillos, gráficos, cielo…)
-  screens/      Hoy, Hábitos, Diario, Vida, Yo, Bienvenida
+  screens/      Hoy, Hábitos (+Metas), Diario, Gente, Yo, Bienvenida
   styles/       sistema visual con tokens (claro/oscuro y acentos)
 ```
 

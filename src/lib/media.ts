@@ -6,7 +6,8 @@ import { useEffect, useState } from 'react'
 import type { MediaMeta } from '../store/types'
 import { uid } from './util'
 
-const store = createStore('alba-media', 'files')
+let _store: ReturnType<typeof createStore> | undefined
+const db = () => (_store ??= createStore('alba-media', 'files'))
 
 export type MediaPurpose = 'moment' | 'avatar' | 'person' | 'proof'
 
@@ -71,10 +72,6 @@ async function encode(src: ImageBitmap | HTMLImageElement | HTMLVideoElement, ma
   return { blob, width, height }
 }
 
-export interface Prepared {
-  meta: MediaMeta
-}
-
 export async function addImage(file: File, purpose: MediaPurpose): Promise<MediaMeta> {
   const p = PRESETS[purpose]
   const src = await decode(file)
@@ -82,8 +79,8 @@ export async function addImage(file: File, purpose: MediaPurpose): Promise<Media
   const thumb = await encode(src, THUMB.max, THUMB.quality)
   if ('close' in src) src.close()
   const id = uid()
-  await set(`${id}:full`, full.blob, store)
-  await set(`${id}:thumb`, thumb.blob, store)
+  await set(`${id}:full`, full.blob, db())
+  await set(`${id}:thumb`, thumb.blob, db())
   return {
     id,
     kind: 'image',
@@ -119,8 +116,8 @@ export async function addVideo(file: File): Promise<MediaMeta> {
     })
     const thumb = await encode(video, THUMB.max, THUMB.quality)
     const id = uid()
-    await set(`${id}:full`, file, store)
-    await set(`${id}:thumb`, thumb.blob, store)
+    await set(`${id}:full`, file, db())
+    await set(`${id}:thumb`, thumb.blob, db())
     return {
       id,
       kind: 'video',
@@ -146,22 +143,22 @@ export async function addFile(file: File, purpose: MediaPurpose): Promise<MediaM
 }
 
 export async function removeMediaFiles(id: string) {
-  await del(`${id}:full`, store)
-  await del(`${id}:thumb`, store)
+  await del(`${id}:full`, db())
+  await del(`${id}:thumb`, db())
   urlCache.delete(`${id}:full`)
   urlCache.delete(`${id}:thumb`)
 }
 
 export async function getBlob(id: string, size: 'full' | 'thumb'): Promise<Blob | undefined> {
-  return get(`${id}:${size}`, store)
+  return get(`${id}:${size}`, db())
 }
 
 export async function allMediaKeys(): Promise<string[]> {
-  return (await keys(store)).map(String)
+  return (await keys(db())).map(String)
 }
 
 export async function putBlob(key: string, blob: Blob) {
-  await set(key, blob, store)
+  await set(key, blob, db())
 }
 
 const urlCache = new Map<string, string>()

@@ -109,7 +109,7 @@ export function Sky({ part, now, joy = 0.6, children }: { part: DayPart; now: Da
       <svg className="hills" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden>
         <path d="M0 50 C 60 20, 120 30, 190 46 S 320 30, 400 40 L400 90 L0 90 Z" fill={sky.hill1} />
         <path d="M0 64 C 80 44, 150 70, 240 58 S 360 48, 400 56 L400 90 L0 90 Z" fill={sky.hill2} />
-        <path d="M0 76 C 90 62, 200 86, 300 72 S 380 70, 400 72 L400 90 L0 90 Z" fill="var(--bg)" />
+        <path d="M0 76 C 90 62, 200 86, 300 72 S 380 70, 400 72 L400 90 L0 90 Z" fill="var(--paper)" />
       </svg>
       {children}
     </header>

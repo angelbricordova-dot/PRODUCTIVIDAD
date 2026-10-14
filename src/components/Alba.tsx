@@ -5,12 +5,13 @@ import { motion } from 'framer-motion'
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
-const MOOD_STOPS: [number, [number, number, number]][] = [
-  [0, [108, 99, 255]],
-  [0.25, [77, 150, 255]],
-  [0.5, [150, 164, 190]],
-  [0.75, [46, 196, 140]],
-  [1, [255, 186, 46]],
+// Paradas de color del ánimo; entre ellas se mezcla en OKLCH para evitar tonos sucios.
+const MOOD_STOPS: [number, string][] = [
+  [0, '#6c63ff'],
+  [0.25, '#4d96ff'],
+  [0.5, '#96a4be'],
+  [0.75, '#2ec48c'],
+  [1, '#ffba2e'],
 ]
 
 export function moodColor(s: number): string {
@@ -19,9 +20,8 @@ export function moodColor(s: number): string {
   while (i < MOOD_STOPS.length - 2 && t > MOOD_STOPS[i + 1][0]) i++
   const [t0, c0] = MOOD_STOPS[i]
   const [t1, c1] = MOOD_STOPS[i + 1]
-  const k = (t - t0) / (t1 - t0)
-  const c = c0.map((v, j) => Math.round(lerp(v, c1[j], k)))
-  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`
+  const k = Math.round(((t - t0) / (t1 - t0)) * 100)
+  return `color-mix(in oklch, ${c1} ${k}%, ${c0})`
 }
 
 /** Cara en un lienzo de 100×100. `joy` va de 0 (fatal) a 1 (genial). */
@@ -32,6 +32,7 @@ export function Face({ joy, sleepy = false, ink = '#2a1a3a' }: { joy: number; sl
   const happyEyes = s > 0.9
   const browTilt = s < 0.38 ? (0.38 - s) * 34 : 0
   const cheeks = Math.max(0, (s - 0.5) * 1.8)
+  const brow = (browTilt / 34) * 6
   const spring = { type: 'spring', stiffness: 380, damping: 26 } as const
   const mouth = `M 37 60 Q 50 ${60 + curve} 63 60 Q 50 ${60 + curve + open} 37 60 Z`
 
@@ -53,8 +54,8 @@ export function Face({ joy, sleepy = false, ink = '#2a1a3a' }: { joy: number; sl
         </g>
       )}
       <motion.g animate={{ opacity: browTilt ? 1 : 0 }} transition={spring}>
-        <motion.line x1={34} y1={38} x2={45} y2={38} stroke={ink} strokeWidth={2.8} strokeLinecap="round" animate={{ rotate: -browTilt }} style={{ originX: '45px', originY: '38px' }} transition={spring} />
-        <motion.line x1={55} y1={38} x2={66} y2={38} stroke={ink} strokeWidth={2.8} strokeLinecap="round" animate={{ rotate: browTilt }} style={{ originX: '55px', originY: '38px' }} transition={spring} />
+        <motion.path d={`M 33 ${38 + brow * 0.4} L 45 ${38 - brow}`} animate={{ d: `M 33 ${38 + brow * 0.4} L 45 ${38 - brow}` }} transition={spring} stroke={ink} strokeWidth={2.8} strokeLinecap="round" />
+        <motion.path d={`M 55 ${38 - brow} L 67 ${38 + brow * 0.4}`} animate={{ d: `M 55 ${38 - brow} L 67 ${38 + brow * 0.4}` }} transition={spring} stroke={ink} strokeWidth={2.8} strokeLinecap="round" />
       </motion.g>
       {!sleepy && (
         <motion.path

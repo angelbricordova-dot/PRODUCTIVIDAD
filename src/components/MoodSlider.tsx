@@ -48,6 +48,12 @@ export function MoodSlider({
   const mood = moodFromScore(local)
   const color = moodColor(local / 100)
 
+  // La tarjeta que contiene el deslizador se tiñe en vivo con el color del ánimo.
+  useEffect(() => {
+    const card = track.current?.closest('.mood-card') as HTMLElement | null
+    if (card && touched) card.style.setProperty('--mood', color)
+  }, [color, touched])
+
   const update = (s: number) => {
     const v = Math.round(Math.max(0, Math.min(100, s)))
     setLocal(v)
@@ -76,7 +82,7 @@ export function MoodSlider({
           transition={{ type: 'spring', stiffness: 500, damping: 14 }}
           aria-hidden
         >
-          <motion.circle cx={50} cy={50} r={44} animate={{ fill: color }} transition={{ duration: 0.2 }} />
+          <circle cx={50} cy={50} r={44} style={{ fill: color, transition: 'fill 160ms linear' }} />
           <circle cx={38} cy={34} r={20} fill="#fff" opacity={0.18} />
           <Face joy={local / 100} />
         </motion.svg>
