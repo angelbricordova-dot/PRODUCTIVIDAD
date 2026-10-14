@@ -3,18 +3,22 @@ import type { DateKey } from '../lib/date'
 export type ID = string
 
 export type ThemeMode = 'auto' | 'light' | 'dark'
-export type AccentName = 'amanecer' | 'oceano' | 'bosque' | 'lavanda' | 'coral' | 'oro'
+export type AccentName = 'mandarina' | 'cielo' | 'menta' | 'chicle' | 'uva' | 'girasol'
+export type FontId = 'alba' | 'retro' | 'moderna' | 'redonda' | 'clasica' | 'geometrica' | 'mano' | 'iphone'
+export type TextScale = 'sm' | 'md' | 'lg'
 
 export interface Profile {
   name: string
   fullName: string
   avatar: string
+  avatarMedia?: ID // foto de perfil (comprimida)
   motto: string
   theme: ThemeMode
   accent: AccentName
+  font: FontId
+  textScale: TextScale
   sound: boolean
   dayStartHour: number
-  currency: string
   onboarded: boolean
   createdAt: DateKey
 }
@@ -54,7 +58,7 @@ export interface Habit {
 }
 
 export type XPSource =
-  | 'habit' | 'journal' | 'mood' | 'gratitude' | 'finance' | 'relation'
+  | 'habit' | 'journal' | 'mood' | 'gratitude' | 'relation' | 'media'
   | 'focus' | 'quest' | 'achievement' | 'goal' | 'review' | 'bullet' | 'calm'
 
 export interface XPEvent {
@@ -89,6 +93,7 @@ export interface Redemption {
 
 export interface Mood {
   value: 1 | 2 | 3 | 4 | 5
+  score?: number // 0..100, posición exacta del deslizador
   tags: string[]
   note?: string
   ts: number
@@ -100,6 +105,7 @@ export interface JournalEntry {
   highlight?: string
   reflection?: string
   lesson?: string
+  media?: ID[]
 }
 
 export type BulletType = 'task' | 'event' | 'note'
@@ -115,32 +121,16 @@ export interface Bullet {
   createdAt: number
 }
 
-export interface FinanceCategory {
+export interface MediaMeta {
   id: ID
-  name: string
-  emoji: string
-  budget: number // presupuesto mensual (0 = sin límite)
-  kind: 'expense' | 'income'
-}
-
-export interface Transaction {
-  id: ID
-  date: DateKey
-  amount: number // siempre positivo
-  kind: 'expense' | 'income'
-  categoryId: ID
-  note?: string
-  ts: number
-}
-
-export interface SavingsGoal {
-  id: ID
-  name: string
-  emoji: string
-  target: number
-  saved: number
-  deadline?: DateKey
-  createdAt: DateKey
+  kind: 'image' | 'video'
+  mime: string
+  width: number
+  height: number
+  bytes: number // tamaño guardado (ya comprimido)
+  originalBytes: number
+  duration?: number
+  createdAt: number
 }
 
 export type RelationKind = 'familia' | 'pareja' | 'amistad' | 'trabajo' | 'mentor' | 'otro'
@@ -161,6 +151,7 @@ export interface Person {
   cadenceDays: number
   birthday?: string // "MM-DD"
   notes?: string
+  photo?: ID
   interactions: Interaction[]
   createdAt: DateKey
 }
@@ -214,13 +205,12 @@ export interface AppData {
   moods: Record<DateKey, Mood>
   journal: Record<DateKey, JournalEntry>
   bullets: Bullet[]
-  categories: FinanceCategory[]
-  transactions: Transaction[]
-  savings: SavingsGoal[]
   people: Person[]
   goals: Goal[]
   focus: FocusSession[]
   reviews: Record<DateKey, WeeklyReview> // clave = lunes de la semana
   achievements: Record<string, number>
   quests: Record<DateKey, string[]> // misiones ya premiadas ese día
+  media: Record<ID, MediaMeta>
+  habitPhotos: Record<string, ID[]> // clave "<habitId>:<fecha>"
 }

@@ -1,12 +1,11 @@
-import type { Area, FinanceCategory, Habit, Reward, TimeOfDay, Difficulty, Schedule } from '../store/types'
+import type { Area, Habit, Reward, TimeOfDay, Difficulty, Schedule } from '../store/types'
 
 export const DEFAULT_AREAS: Area[] = [
-  { id: 'cuerpo', name: 'Cuerpo', emoji: '💪', color: '#FF8A65' },
-  { id: 'mente', name: 'Mente', emoji: '🧠', color: '#9B8CFF' },
-  { id: 'calma', name: 'Calma', emoji: '🌿', color: '#5CC8A8' },
-  { id: 'finanzas', name: 'Finanzas', emoji: '💰', color: '#F5B841' },
-  { id: 'vinculos', name: 'Vínculos', emoji: '💞', color: '#FF7BA9' },
-  { id: 'proposito', name: 'Propósito', emoji: '🚀', color: '#4FA8F0' },
+  { id: 'cuerpo', name: 'Cuerpo', emoji: '💪', color: '#FF7A3D' },
+  { id: 'mente', name: 'Mente', emoji: '🧠', color: '#8B6CFF' },
+  { id: 'calma', name: 'Calma', emoji: '🌿', color: '#22B892' },
+  { id: 'vinculos', name: 'Vínculos', emoji: '💞', color: '#FF5C9E' },
+  { id: 'proposito', name: 'Propósito', emoji: '🚀', color: '#3E8BFF' },
 ]
 
 export interface HabitTemplate {
@@ -43,11 +42,6 @@ export const TEMPLATES: HabitTemplate[] = [
   { name: 'Escribir en el diario', emoji: '✍️', areaId: 'calma', timeOfDay: 'evening', difficulty: 1 },
   { name: 'Respirar 2 minutos', emoji: '🌬️', areaId: 'calma', timeOfDay: 'afternoon', difficulty: 1, minutes: 2 },
   { name: 'Pantallas fuera 30 min antes de dormir', emoji: '🌙', areaId: 'calma', timeOfDay: 'evening', difficulty: 2 },
-  // Finanzas
-  { name: 'Registrar gastos del día', emoji: '🧾', areaId: 'finanzas', timeOfDay: 'evening', difficulty: 1 },
-  { name: 'Día sin gastos innecesarios', emoji: '🛡️', areaId: 'finanzas', timeOfDay: 'anytime', difficulty: 2 },
-  { name: 'Revisar presupuesto', emoji: '📊', areaId: 'finanzas', timeOfDay: 'anytime', difficulty: 1, schedule: { type: 'days', days: [6] } },
-  { name: 'Apartar ahorro', emoji: '🐷', areaId: 'finanzas', timeOfDay: 'anytime', difficulty: 2, schedule: { type: 'weekly', times: 1 } },
   // Vínculos
   { name: 'Escribir a alguien que quiero', emoji: '💌', areaId: 'vinculos', timeOfDay: 'anytime', difficulty: 1 },
   { name: 'Llamar a la familia', emoji: '📞', areaId: 'vinculos', timeOfDay: 'evening', difficulty: 2, schedule: { type: 'weekly', times: 2 } },
@@ -64,7 +58,6 @@ export const STARTER = [
   'Meditar',
   'Entrenar',
   'Leer',
-  'Registrar gastos del día',
   'Escribir a alguien que quiero',
   'Escribir en el diario',
 ]
@@ -78,25 +71,9 @@ export const DEFAULT_REWARDS: Reward[] = [
   { id: 'r-capricho', name: 'Ese capricho que llevo tiempo queriendo', emoji: '🎁', cost: 1500 },
 ]
 
-export const DEFAULT_CATEGORIES: FinanceCategory[] = [
-  { id: 'c-comida', name: 'Comida', emoji: '🍽️', budget: 0, kind: 'expense' },
-  { id: 'c-super', name: 'Súper', emoji: '🛒', budget: 0, kind: 'expense' },
-  { id: 'c-transporte', name: 'Transporte', emoji: '🚗', budget: 0, kind: 'expense' },
-  { id: 'c-casa', name: 'Casa', emoji: '🏠', budget: 0, kind: 'expense' },
-  { id: 'c-ocio', name: 'Ocio', emoji: '🎉', budget: 0, kind: 'expense' },
-  { id: 'c-salud', name: 'Salud', emoji: '💊', budget: 0, kind: 'expense' },
-  { id: 'c-suscripciones', name: 'Suscripciones', emoji: '🔁', budget: 0, kind: 'expense' },
-  { id: 'c-ropa', name: 'Ropa', emoji: '👕', budget: 0, kind: 'expense' },
-  { id: 'c-educacion', name: 'Educación', emoji: '🎓', budget: 0, kind: 'expense' },
-  { id: 'c-regalos', name: 'Regalos', emoji: '🎁', budget: 0, kind: 'expense' },
-  { id: 'c-otros', name: 'Otros', emoji: '📦', budget: 0, kind: 'expense' },
-  { id: 'i-salario', name: 'Salario', emoji: '💼', budget: 0, kind: 'income' },
-  { id: 'i-extra', name: 'Ingreso extra', emoji: '✨', budget: 0, kind: 'income' },
-]
-
 export const MOOD_TAGS = [
   'Trabajo', 'Familia', 'Amigos', 'Pareja', 'Ejercicio', 'Descanso', 'Comida',
-  'Dinero', 'Salud', 'Estudio', 'Naturaleza', 'Música', 'Logro', 'Estrés', 'Soledad',
+  'Salud', 'Estudio', 'Naturaleza', 'Música', 'Logro', 'Estrés', 'Soledad',
 ]
 
 export const PROMPTS = [

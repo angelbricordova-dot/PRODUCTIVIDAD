@@ -1,42 +1,33 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useStore } from '../store'
-import type { Mood } from '../store/types'
 import type { DateKey } from '../lib/date'
 import { MOOD_TAGS } from '../lib/seed'
 import { cx } from '../lib/util'
 import { Sheet } from './ui'
+import { MoodSlider, moodFromScore, scoreFromValue } from './MoodSlider'
+import { moodColor } from './Alba'
 
-export const MOODS: { v: Mood['value']; face: string; label: string; color: string }[] = [
-  { v: 1, face: '😣', label: 'Fatal', color: '#8b7fc7' },
-  { v: 2, face: '😕', label: 'Bajo', color: '#7fa8d6' },
-  { v: 3, face: '😐', label: 'Normal', color: '#b9b2a4' },
-  { v: 4, face: '🙂', label: 'Bien', color: '#7cc79a' },
-  { v: 5, face: '🤩', label: 'Genial', color: '#ffb547' },
-]
+export function moodScore(m: { value: number; score?: number } | undefined) {
+  if (!m) return undefined
+  return m.score ?? scoreFromValue(m.value as 1 | 2 | 3 | 4 | 5)
+}
 
-export function MoodPicker({ value, onPick }: { value?: number; onPick: (v: Mood['value']) => void }) {
-  return (
-    <div className="moods">
-      {MOODS.map((m) => (
-        <button key={m.v} className={cx('mood', value === m.v && 'on')} onClick={() => onPick(m.v)} aria-label={m.label}>
-          <span className="face">{m.face}</span>
-          {m.label}
-        </button>
-      ))}
-    </div>
-  )
+export function moodSwatch(m: { value: number; score?: number } | undefined) {
+  const s = moodScore(m)
+  return s === undefined ? undefined : moodColor(s / 100)
 }
 
 export function MoodSheet({ open, onClose, day }: { open: boolean; onClose: () => void; day: DateKey }) {
   const current = useStore((s) => s.moods[day])
   const setMood = useStore((s) => s.setMood)
-  const [value, setValue] = useState<Mood['value'] | undefined>(current?.value)
+  const [score, setScore] = useState<number | undefined>(moodScore(current))
   const [tags, setTags] = useState<string[]>(current?.tags ?? [])
   const [note, setNote] = useState(current?.note ?? '')
 
   useEffect(() => {
     if (open) {
-      setValue(current?.value)
+      setScore(moodScore(current))
       setTags(current?.tags ?? [])
       setNote(current?.note ?? '')
     }
@@ -44,8 +35,8 @@ export function MoodSheet({ open, onClose, day }: { open: boolean; onClose: () =
   }, [open])
 
   const save = () => {
-    if (!value) return
-    setMood(day, { value, tags, note: note.trim() || undefined })
+    if (score === undefined) return
+    setMood(day, { value: moodFromScore(score).value, score, tags, note: note.trim() || undefined })
     onClose()
   }
 
@@ -53,24 +44,35 @@ export function MoodSheet({ open, onClose, day }: { open: boolean; onClose: () =
     <Sheet
       open={open}
       onClose={onClose}
-      title="¿Cómo te sientes?"
+      title="Tu ánimo"
       footer={
-        <button className="btn primary block" disabled={!value} onClick={save}>
+        <button className="btn primary block" disabled={score === undefined} onClick={save}>
           Guardar
         </button>
       }
     >
-      <div className="stack-12">
-        <MoodPicker value={value} onPick={setValue} />
-        <div className="eyebrow" style={{ marginTop: 18 }}>
-          ¿Qué está influyendo?
-        </div>
-        <div className="chips wrap">
-          {MOOD_TAGS.map((t) => (
-            <button key={t} className={cx('chip', tags.includes(t) && 'on')} onClick={() => setTags((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]))}>
-              {t}
-            </button>
-          ))}
+      <div className="stack-16">
+        <MoodSlider score={score} onCommit={setScore} />
+        <div>
+          <h3 className="label-title">¿Qué está influyendo?</h3>
+          <div className="chips wrap">
+            {MOOD_TAGS.map((t, i) => {
+              const on = tags.includes(t)
+              return (
+                <motion.button
+                  key={t}
+                  className={cx('chip', on && 'on')}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: open ? i * 0.015 : 0, duration: 0.25 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setTags((x) => (x.includes(t) ? x.filter((y) => y !== t) : [...x, t]))}
+                >
+                  {t}
+                </motion.button>
+              )
+            })}
+          </div>
         </div>
         <textarea className="textarea" placeholder="Una línea sobre tu día (opcional)" value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
       </div>

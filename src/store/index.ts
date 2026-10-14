@@ -2,19 +2,20 @@ import { create } from 'zustand'
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware'
 import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval'
 import type {
-  AppData, Habit, Mood, JournalEntry, Bullet, Transaction, FinanceCategory, SavingsGoal,
+  AppData, Habit, Mood, JournalEntry, Bullet, MediaMeta,
   Person, Interaction, Goal, Reward, WeeklyReview, XPEvent, Profile, Area, ID,
 } from './types'
 import { todayKey, type DateKey } from '../lib/date'
 import { uid } from '../lib/util'
-import { DEFAULT_AREAS, DEFAULT_CATEGORIES, DEFAULT_REWARDS, templateToHabit, type HabitTemplate } from '../lib/seed'
+import { DEFAULT_AREAS, DEFAULT_REWARDS, templateToHabit, type HabitTemplate } from '../lib/seed'
+import { removeMediaFiles } from '../lib/media'
 import { habitReward, levelFromXp, coinsFor, XP, AREA_SCALE, titleFor } from '../lib/game'
 import { habitStreak, isDone } from '../lib/habits'
 import { totalXp, areaXp, coinBalance } from './selectors'
 import { useUI } from './ui'
 import { playComplete, playLevelUp, playUndo, playCoins, haptic } from '../lib/feedback'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export function initialData(): AppData {
   const today = todayKey()
@@ -26,10 +27,11 @@ export function initialData(): AppData {
       avatar: '🦁',
       motto: 'Cada día, un poco mejor.',
       theme: 'auto',
-      accent: 'amanecer',
+      accent: 'mandarina',
+      font: 'alba',
+      textScale: 'md',
       sound: true,
       dayStartHour: 4,
-      currency: 'USD',
       onboarded: false,
       createdAt: today,
     },
@@ -43,16 +45,39 @@ export function initialData(): AppData {
     moods: {},
     journal: {},
     bullets: [],
-    categories: DEFAULT_CATEGORIES,
-    transactions: [],
-    savings: [],
     people: [],
     goals: [],
     focus: [],
     reviews: {},
     achievements: {},
     quests: {},
+    media: {},
+    habitPhotos: {},
   }
+}
+
+/**
+ * Evoluciona datos guardados de versiones anteriores sin perder nada útil.
+ * v1 → v2: se elimina Finanzas (movimientos, categorías, ahorro, moneda) y llegan fotos y tipografías.
+ */
+export function migrateData(raw: Record<string, any>, from: number): AppData {
+  const base = initialData()
+  const d: Record<string, any> = { ...base, ...raw }
+  d.profile = { ...base.profile, ...(raw.profile ?? {}) }
+  if (from < 2) {
+    delete d.transactions
+    delete d.categories
+    delete d.savings
+    delete d.profile.currency
+    const usesFinance = (d.habits ?? []).some((h: Habit) => h.areaId === 'finanzas')
+    if (!usesFinance) d.areas = (d.areas ?? []).filter((a: { id: string }) => a.id !== 'finanzas')
+    const accents: Record<string, string> = { amanecer: 'mandarina', oceano: 'cielo', bosque: 'menta', lavanda: 'uva', coral: 'chicle', oro: 'girasol' }
+    d.profile.accent = accents[d.profile.accent] ?? 'mandarina'
+    d.media ??= {}
+    d.habitPhotos ??= {}
+  }
+  d.version = SCHEMA_VERSION
+  return d as AppData
 }
 
 type NewEvent = Omit<XPEvent, 'id' | 'ts' | 'coins'> & { coins?: number }
@@ -87,13 +112,12 @@ interface Actions {
   migrateBullet: (id: ID, to: DateKey) => void
   deleteBullet: (id: ID) => void
 
-  addTransaction: (t: Omit<Transaction, 'id' | 'ts'>) => void
-  deleteTransaction: (id: ID) => void
-  upsertCategory: (c: FinanceCategory) => void
-  deleteCategory: (id: ID) => void
-  upsertSavings: (g: SavingsGoal) => void
-  deleteSavings: (id: ID) => void
-  depositSavings: (id: ID, amount: number) => void
+  addMedia: (m: MediaMeta) => void
+  deleteMedia: (id: ID) => void
+  addJournalMedia: (day: DateKey, m: MediaMeta) => void
+  removeJournalMedia: (day: DateKey, id: ID) => void
+  addHabitPhoto: (habitId: ID, day: DateKey, m: MediaMeta) => void
+  removeHabitPhoto: (habitId: ID, day: DateKey, id: ID) => void
 
   upsertPerson: (p: Person) => void
   deletePerson: (id: ID) => void
@@ -314,42 +338,37 @@ export const useStore = create<Store>()(
         get().revoke(`bullet:${id}`)
       },
 
-      addTransaction: (t) => {
-        const id = uid()
-        set((s) => ({ transactions: [...s.transactions, { ...t, id, ts: Date.now() }] }))
-        const today = get().today()
-        const loggedToday = get().events.filter((e) => e.source === 'finance' && e.date === today).length
-        if (loggedToday < XP.financeDailyCap)
-          get().award({ date: today, xp: XP.finance, source: 'finance', label: 'Movimiento registrado', areaId: 'finanzas', ref: `tx:${id}` })
+      addMedia: (m) => set((s) => ({ media: { ...s.media, [m.id]: m } })),
+      deleteMedia: (id) => {
+        set((s) => {
+          const media = { ...s.media }
+          delete media[id]
+          return { media }
+        })
+        void removeMediaFiles(id)
       },
-      deleteTransaction: (id) => {
-        set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) }))
-        get().revoke(`tx:${id}`)
+      addJournalMedia: (day, m) => {
+        get().addMedia(m)
+        const prev = get().journal[day] ?? { gratitude: [] }
+        set((s) => ({ journal: { ...s.journal, [day]: { ...prev, media: [...(prev.media ?? []), m.id] } } }))
+        get().award({ date: day, xp: 5, source: 'media', label: m.kind === 'video' ? 'Video guardado' : 'Momento guardado', areaId: 'calma', ref: `moment:${day}` })
       },
-      upsertCategory: (c) =>
-        set((s) => ({
-          categories: s.categories.some((x) => x.id === c.id) ? s.categories.map((x) => (x.id === c.id ? c : x)) : [...s.categories, c],
-        })),
-      deleteCategory: (id) => set((s) => ({ categories: s.categories.filter((c) => c.id !== id) })),
-      upsertSavings: (g) =>
-        set((s) => ({
-          savings: s.savings.some((x) => x.id === g.id) ? s.savings.map((x) => (x.id === g.id ? g : x)) : [...s.savings, g],
-        })),
-      deleteSavings: (id) => set((s) => ({ savings: s.savings.filter((g) => g.id !== id) })),
-      depositSavings: (id, amount) => {
-        const g = get().savings.find((x) => x.id === id)
-        if (!g) return
-        const saved = Math.max(0, g.saved + amount)
-        get().upsertSavings({ ...g, saved })
-        const today = get().today()
-        if (amount > 0) {
-          playCoins()
-          get().award({ date: today, xp: 15, source: 'finance', label: `Ahorro para ${g.name}`, areaId: 'finanzas', ref: `save:${id}:${Date.now()}` })
-          if (g.saved < g.target && saved >= g.target) {
-            useUI.getState().celebrate({ kind: 'reward', title: '¡Meta de ahorro lograda!', subtitle: `${g.emoji} ${g.name}`, emoji: '🏆' })
-            get().award({ date: today, xp: 150, source: 'finance', label: `Meta cumplida: ${g.name}`, areaId: 'finanzas', ref: `savegoal:${id}` })
-          }
-        }
+      removeJournalMedia: (day, id) => {
+        const prev = get().journal[day]
+        if (prev) set((s) => ({ journal: { ...s.journal, [day]: { ...prev, media: (prev.media ?? []).filter((x) => x !== id) } } }))
+        get().deleteMedia(id)
+      },
+      addHabitPhoto: (habitId, day, m) => {
+        get().addMedia(m)
+        const key = `${habitId}:${day}`
+        set((s) => ({ habitPhotos: { ...s.habitPhotos, [key]: [...(s.habitPhotos[key] ?? []), m.id] } }))
+        const h = get().habits.find((x) => x.id === habitId)
+        get().award({ date: day, xp: 5, source: 'media', label: `Prueba: ${h?.name ?? 'hábito'}`, areaId: h?.areaId, ref: `proof:${key}` })
+      },
+      removeHabitPhoto: (habitId, day, id) => {
+        const key = `${habitId}:${day}`
+        set((s) => ({ habitPhotos: { ...s.habitPhotos, [key]: (s.habitPhotos[key] ?? []).filter((x) => x !== id) } }))
+        get().deleteMedia(id)
       },
 
       upsertPerson: (p) =>
@@ -454,7 +473,7 @@ export const useStore = create<Store>()(
         get().award({ date: day, xp: XP.quest, source: 'quest', label: `Misión: ${title}`, ref: `quest:${day}:${id}` })
       },
 
-      importData: (d) => set({ ...initialData(), ...d, version: SCHEMA_VERSION }),
+      importData: (d) => set(migrateData(d as any, (d as AppData).version ?? 1)),
       resetAll: () => set({ ...initialData() }),
     }),
     {
@@ -468,7 +487,7 @@ export const useStore = create<Store>()(
         return data as unknown as AppData
       },
       // Punto único para evolucionar el esquema sin perder datos.
-      migrate: (persisted, _version) => ({ ...initialData(), ...(persisted as AppData) }) as any,
+      migrate: (persisted, version) => migrateData(persisted as Record<string, any>, version) as any,
       merge: (persisted, current) => ({ ...current, ...(persisted as AppData) }),
       onRehydrateStorage: () => () => {
         useStore.setState({ hydrated: true })

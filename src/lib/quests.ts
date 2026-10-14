@@ -60,7 +60,7 @@ export const QUEST_POOL: Quest[] = [
     emoji: '💞',
     progress: (d, day) => (d.people.some((p) => p.interactions.some((i) => i.date === day)) ? 1 : 0),
   },
-  { id: 'money', title: 'Registra un movimiento de dinero', emoji: '🧾', progress: (d, day) => (d.transactions.some((t) => t.date === day) ? 1 : 0) },
+  { id: 'moment', title: 'Guarda una foto del día', emoji: '📸', progress: (d, day) => ((d.journal[day]?.media ?? []).length ? 1 : 0) },
   { id: 'reflect', title: 'Escribe tu reflexión del día', emoji: '✍️', progress: (d, day) => Math.min(1, (d.journal[day]?.reflection ?? '').trim().length / 40) },
   {
     id: 'bullets',

@@ -78,8 +78,6 @@ export const XP = {
   gratitude: 15,
   intention: 5,
   reflection: 20,
-  finance: 5,
-  financeDailyCap: 5,
   relation: 15,
   focusPerMin: 1,
   breath: 10,
