@@ -23,7 +23,7 @@ export function Shop({ open, onClose }: { open: boolean; onClose: () => void }) 
         <div className="stack-12">
           <div className="wallet">
             <div>
-              <div className="eyebrow" style={{ color: 'inherit', opacity: 0.7 }}>Tus monedas</div>
+              <div className="label-title" style={{ color: 'inherit', opacity: 0.7 }}>Tus monedas</div>
               <b><CountUp value={coins} /></b>
             </div>
             <Coin lg />
@@ -70,7 +70,7 @@ export function Shop({ open, onClose }: { open: boolean; onClose: () => void }) 
           </button>
           {redemptions.length > 0 && (
             <>
-              <div className="eyebrow" style={{ marginTop: 10 }}>Canjeadas</div>
+              <div className="label-title" style={{ marginTop: 10 }}>Canjeadas</div>
               <div className="list">
                 {[...redemptions].reverse().slice(0, 20).map((r) => (
                   <div key={r.id} className="list-item">

@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useDragControls, type PanInfo } from 'framer-motion'
 import { X, Minus, Plus } from 'lucide-react'
 import { cx } from '../lib/util'
+import { AlbaSun } from './Alba'
 
 export const springy = { type: 'spring', stiffness: 520, damping: 34, mass: 0.8 } as const
 export const soft = { type: 'spring', stiffness: 260, damping: 30 } as const
@@ -94,8 +95,8 @@ export function Ring({
   value,
   size = 56,
   stroke = 6,
-  color = 'url(#ringGrad)',
-  track = 'var(--surface-3)',
+  color = 'var(--a)',
+  track = 'var(--surface-2)',
   children,
 }: {
   value: number
@@ -105,29 +106,19 @@ export function Ring({
   track?: string
   children?: ReactNode
 }) {
-  const id = useId()
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const v = Math.max(0, Math.min(1, value))
-  const grad = color === 'url(#ringGrad)'
   return (
     <div className="ring-wrap" style={{ width: size, height: size }}>
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {grad && (
-          <defs>
-            <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="var(--a1)" />
-              <stop offset="1" stopColor="var(--a2)" />
-            </linearGradient>
-          </defs>
-        )}
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={grad ? `url(#g${id})` : color}
+          stroke={color === 'url(#ringGrad)' ? 'var(--a)' : color}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={c}
@@ -141,9 +132,9 @@ export function Ring({
   )
 }
 
-export function XPBar({ value, thin }: { value: number; thin?: boolean }) {
+export function XPBar({ value, thin, colored }: { value: number; thin?: boolean; colored?: boolean }) {
   return (
-    <div className={cx('xpbar', thin && 'thin')}>
+    <div className={cx('xpbar', thin && 'thin', colored && 'c')}>
       <motion.i
         initial={false}
         animate={{ scaleX: Math.max(0.02, Math.min(1, value)) }}
@@ -212,10 +203,12 @@ export function Stepper({ value, onChange, min = 0, max = 999, step = 1, suffix 
   )
 }
 
-export function Empty({ emoji, title, children }: { emoji: string; title: string; children?: ReactNode }) {
+export function Empty({ title, children, joy = 0.6 }: { emoji?: string; title: string; children?: ReactNode; joy?: number }) {
   return (
     <div className="empty">
-      <div className="e-emoji">{emoji}</div>
+      <div style={{ display: 'grid', placeItems: 'center' }}>
+        <AlbaSun size={78} joy={joy} />
+      </div>
       <b>{title}</b>
       {children && <div className="small">{children}</div>}
     </div>

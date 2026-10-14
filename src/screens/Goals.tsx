@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Plus, Check, Trash2, Trophy, CalendarDays } from 'lucide-react'
-import { useStore } from '../../store'
-import { useToday } from '../../lib/hooks'
-import { diffDays, shortDate } from '../../lib/date'
-import { uid, cx } from '../../lib/util'
-import { EmojiPicker, Empty, Field, Ring, Sheet } from '../../components/ui'
-import type { Goal } from '../../store/types'
+import { useStore } from '../store'
+import { useToday } from '../lib/hooks'
+import { diffDays, shortDate } from '../lib/date'
+import { uid, cx } from '../lib/util'
+import { EmojiPicker, Empty, Field, Ring, Sheet } from '../components/ui'
+import type { Goal } from '../store/types'
 
 export function Goals() {
   const goals = useStore((s) => s.goals)
@@ -27,7 +27,7 @@ export function Goals() {
     <div>
       {goals.length === 0 ? (
         <div className="card">
-          <Empty emoji="🏔️" title="Metas grandes, pasos pequeños">
+          <Empty title="Metas grandes, pasos pequeños">
             Define a dónde quieres llegar y divídelo en hitos. Cada hito da +40 XP; cumplir la meta, +200.
           </Empty>
           <button className="btn primary block" onClick={() => setEdit(fresh())}>
@@ -109,7 +109,7 @@ export function Goals() {
           })}
           {done.length > 0 && (
             <>
-              <div className="eyebrow" style={{ margin: '16px 4px 0' }}>
+              <div className="label-title" style={{ margin: '16px 4px 0' }}>
                 Cumplidas · {done.length}
               </div>
               <div className="list">

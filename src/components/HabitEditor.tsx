@@ -87,7 +87,7 @@ export function HabitEditor({ open, onClose, id }: { open: boolean; onClose: () 
             if (!list.length) return null
             return (
               <div key={a.id}>
-                <div className="eyebrow" style={{ margin: '14px 4px 8px' }}>
+                <div className="label-title" style={{ margin: '14px 4px 8px' }}>
                   {a.emoji} {a.name}
                 </div>
                 <div className="list">

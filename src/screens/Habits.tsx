@@ -7,10 +7,37 @@ import { useToday } from '../lib/hooks'
 import { habitRate, habitStreak, isDone, isScheduled, scheduleLabel, completionRate } from '../lib/habits'
 import { lastNDays, WEEKDAYS_SHORT, weekdayMon } from '../lib/date'
 import { cx } from '../lib/util'
-import { Empty, Ring } from '../components/ui'
+import { Empty, Segmented } from '../components/ui'
+import { Goals } from './Goals'
 import type { Habit } from '../store/types'
 
 export function Habits() {
+  const [view, setView] = useState<'habitos' | 'metas'>('habitos')
+  return (
+    <div className="page">
+      <div className="page-head">
+        <h1 className="page-title">{view === 'habitos' ? 'Hábitos' : 'Metas'}</h1>
+      </div>
+      <Segmented
+        value={view}
+        onChange={setView}
+        options={[
+          { value: 'habitos', label: 'Hábitos' },
+          { value: 'metas', label: 'Metas' },
+        ]}
+      />
+      <div style={{ marginTop: 18 }}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div key={view} initial={{ opacity: 0, x: view === 'metas' ? 24 : -24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
+            {view === 'habitos' ? <HabitList /> : <Goals />}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  )
+}
+
+function HabitList() {
   const habits = useStore((s) => s.habits)
   const areas = useStore((s) => s.areas)
   const logs = useStore((s) => s.logs)
@@ -29,30 +56,20 @@ export function Habits() {
   const rate30 = completionRate(active, logs, lastNDays(today, 30))
 
   return (
-    <div className="page">
-      <div className="page-head">
-        <div>
-          <div className="eyebrow">{active.length} activos</div>
-          <h1 className="page-title">Hábitos</h1>
-        </div>
-        <button className={cx('btn sm', reorder ? '' : 'soft')} onClick={() => setReorder((r) => !r)}>
-          {reorder ? 'Listo' : 'Ordenar'}
-        </button>
-      </div>
-
+    <div>
       <div className="grid-2">
-        <div className="stat-tile row">
-          <Ring value={rate7} size={46} stroke={5} />
-          <div>
-            <span>7 días</span>
-            <b style={{ fontSize: 22 }}>{Math.round(rate7 * 100)}%</b>
+        <div className="tile c-menta">
+          <span>Esta semana</span>
+          <b>{Math.round(rate7 * 100)}%</b>
+          <div className="xpbar thin c" style={{ marginTop: 8 }}>
+            <i style={{ width: `${rate7 * 100}%`, position: 'absolute' }} />
           </div>
         </div>
-        <div className="stat-tile row">
-          <Ring value={rate30} size={46} stroke={5} />
-          <div>
-            <span>30 días</span>
-            <b style={{ fontSize: 22 }}>{Math.round(rate30 * 100)}%</b>
+        <div className="tile c-cielo">
+          <span>Últimos 30 días</span>
+          <b>{Math.round(rate30 * 100)}%</b>
+          <div className="xpbar thin c" style={{ marginTop: 8 }}>
+            <i style={{ width: `${rate30 * 100}%`, position: 'absolute' }} />
           </div>
         </div>
       </div>
@@ -69,9 +86,15 @@ export function Habits() {
       </div>
 
       <div className="section">
+        <div className="section-head">
+          <h2 className="section-title">Activos · {list.length}</h2>
+          <button className="section-link" onClick={() => setReorder((r) => !r)}>
+            {reorder ? 'Listo' : 'Ordenar'}
+          </button>
+        </div>
         {list.length === 0 ? (
           <div className="card">
-            <Empty emoji="🌿" title="Nada por aquí todavía">
+            <Empty title="Nada por aquí todavía">
               Crea un hábito para esta área. Empieza tan pequeño que sea imposible fallar.
             </Empty>
           </div>
@@ -108,9 +131,7 @@ export function Habits() {
         </div>
       )}
 
-      <div className="section card flat small muted">
-        <b style={{ color: 'var(--ink)' }}>Consejo de Alba:</b> la clave no es la intensidad, es la identidad. Cada vez que marcas un hábito, votas por la persona que quieres ser.
-      </div>
+
 
       <button className="fab" onClick={() => open({ type: 'habit' })} aria-label="Nuevo hábito">
         <Plus size={26} strokeWidth={2.6} />
@@ -128,7 +149,7 @@ function HabitLine({ habit, week, reorder, onMove }: { habit: Habit; week: strin
   const today = week[week.length - 1]
   const streak = habitStreak(habit, logs, restDays, today)
   const rate = habitRate(habit, logs, lastNDays(today, 30))
-  const color = area?.color ?? 'var(--a1)'
+  const color = area?.color ?? 'var(--a)'
 
   return (
     <div className="list-item" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 10 }}>

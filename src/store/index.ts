@@ -9,6 +9,8 @@ import { todayKey, type DateKey } from '../lib/date'
 import { uid } from '../lib/util'
 import { DEFAULT_AREAS, DEFAULT_REWARDS, templateToHabit, type HabitTemplate } from '../lib/seed'
 import { removeMediaFiles } from '../lib/media'
+import { ACHIEVEMENTS } from '../lib/achievements'
+import { Trophy } from 'lucide-react'
 import { habitReward, levelFromXp, coinsFor, XP, AREA_SCALE, titleFor } from '../lib/game'
 import { habitStreak, isDone } from '../lib/habits'
 import { totalXp, areaXp, coinBalance } from './selectors'
@@ -136,7 +138,7 @@ interface Actions {
   deleteReward: (id: ID) => void
   redeem: (id: ID) => boolean
 
-  unlockAchievement: (id: string, title: string, emoji: string, xp: number) => void
+  unlockAchievement: (id: string) => void
   claimQuest: (day: DateKey, id: string, title: string) => void
 
   importData: (d: AppData) => void
@@ -411,7 +413,7 @@ export const useStore = create<Store>()(
         get().upsertGoal({ ...g, done, doneAt: done ? get().today() : undefined })
         const ref = `goal:${goalId}`
         if (done) {
-          useUI.getState().celebrate({ kind: 'achievement', title: '¡Meta cumplida!', subtitle: `${g.emoji} ${g.title}`, emoji: '🏆' })
+          useUI.getState().celebrate({ kind: 'achievement', title: '¡Meta cumplida!', subtitle: `${g.emoji} ${g.title}`, icon: Trophy, color: 'girasol' })
           playLevelUp()
           get().award({ date: get().today(), xp: XP.goal, source: 'goal', label: `Meta: ${g.title}`, areaId: g.areaId, ref })
         } else get().revoke(ref)
@@ -456,13 +458,14 @@ export const useStore = create<Store>()(
         return true
       },
 
-      unlockAchievement: (id, title, emoji, xp) => {
-        if (get().achievements[id]) return
+      unlockAchievement: (id) => {
+        const a = ACHIEVEMENTS.find((x) => x.id === id)
+        if (!a || get().achievements[id]) return
         set((s) => ({ achievements: { ...s.achievements, [id]: Date.now() } }))
         // Los logros grandes merecen pantalla completa; los pequeños, un aviso que no interrumpe.
-        if (xp >= 100) useUI.getState().celebrate({ kind: 'achievement', title: 'Logro desbloqueado', subtitle: title, emoji })
-        else useUI.getState().toast({ title: `Logro: ${title}`, subtitle: xp ? `+${xp} XP` : undefined, emoji, tone: 'achievement' })
-        get().award({ date: get().today(), xp, source: 'achievement', label: `Logro: ${title}`, ref: `ach:${id}` }, { silent: true })
+        if (a.xp >= 100) useUI.getState().celebrate({ kind: 'achievement', title: 'Logro desbloqueado', subtitle: a.title, icon: a.icon, color: a.color })
+        else useUI.getState().toast({ title: `Logro: ${a.title}`, subtitle: a.xp ? `+${a.xp} XP` : undefined, icon: a.icon, tone: 'achievement' })
+        get().award({ date: get().today(), xp: a.xp, source: 'achievement', label: `Logro: ${a.title}`, ref: `ach:${id}` }, { silent: true })
       },
 
       claimQuest: (day, id, title) => {

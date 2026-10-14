@@ -17,8 +17,8 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#FBF4EA',
-        theme_color: '#FBF4EA',
+        background_color: '#f3f1fb',
+        theme_color: '#f3f1fb',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -26,8 +26,16 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Las fuentes no se precargan todas: solo la elegida, que queda en caché al usarse.
+        globPatterns: ['**/*.{js,css,html,svg,png}'],
         navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === 'font',
+            handler: 'CacheFirst',
+            options: { cacheName: 'alba-fonts', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+          },
+        ],
       },
     }),
   ],

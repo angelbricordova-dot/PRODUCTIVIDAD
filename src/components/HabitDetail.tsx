@@ -8,6 +8,7 @@ import { DIFFICULTY } from '../lib/game'
 import { cx } from '../lib/util'
 import { Sheet } from './ui'
 import { Heatmap } from './charts'
+import { AddMedia, MediaGrid } from './MediaUI'
 
 export function HabitDetail({ open, onClose, id }: { open: boolean; onClose: () => void; id?: string }) {
   const habit = useStore((s) => s.habits.find((h) => h.id === id))
@@ -15,6 +16,9 @@ export function HabitDetail({ open, onClose, id }: { open: boolean; onClose: () 
   const restDays = useStore((s) => s.restDays)
   const area = useStore((s) => s.areas.find((a) => a.id === habit?.areaId))
   const setHabitCount = useStore((s) => s.setHabitCount)
+  const habitPhotos = useStore((s) => s.habitPhotos)
+  const addHabitPhoto = useStore((s) => s.addHabitPhoto)
+  const removeHabitPhoto = useStore((s) => s.removeHabitPhoto)
   const openOverlay = useUI((s) => s.open)
   const today = useToday()
 
@@ -23,7 +27,13 @@ export function HabitDetail({ open, onClose, id }: { open: boolean; onClose: () 
   const streak = habitStreak(habit, logs, restDays, today)
   const rate30 = habitRate(habit, logs, lastNDays(today, 30))
   const total = Object.values(logs).filter((d) => (d[habit.id] ?? 0) >= habit.target).length
-  const color = area?.color ?? 'var(--a1)'
+  const color = area?.color ?? 'var(--a)'
+  const todayPhotos = habitPhotos[`${habit.id}:${today}`] ?? []
+  const olderPhotos = Object.entries(habitPhotos)
+    .filter(([k]) => k.startsWith(`${habit.id}:`) && k !== `${habit.id}:${today}`)
+    .sort(([a], [b]) => b.localeCompare(a))
+    .flatMap(([k, ids]) => ids.map((id) => ({ id, day: k.split(':')[1] })))
+    .slice(0, 12)
   const week = lastNDays(today, 7)
 
   return (
@@ -74,7 +84,7 @@ export function HabitDetail({ open, onClose, id }: { open: boolean; onClose: () 
         </div>
 
         <div className="card">
-          <div className="eyebrow" style={{ marginBottom: 10 }}>Esta semana · toca para corregir</div>
+          <div className="label-title" style={{ marginBottom: 10 }}>Esta semana · toca para corregir</div>
           <div className="daystrip">
             {week.map((d) => {
               const done = isDone(habit, logs, d)
@@ -96,7 +106,23 @@ export function HabitDetail({ open, onClose, id }: { open: boolean; onClose: () 
         </div>
 
         <div className="card">
-          <div className="eyebrow" style={{ marginBottom: 12 }}>Historial</div>
+          <div className="label-title">Prueba de hoy</div>
+          <p className="small muted" style={{ marginBottom: 10 }}>Una foto de tu comida, del gimnasio, de la página que leíste… +5 XP.</p>
+          <MediaGrid
+            ids={todayPhotos}
+            onDelete={(mid) => removeHabitPhoto(habit.id, today, mid)}
+            add={<AddMedia purpose="proof" onAdded={(m) => addHabitPhoto(habit.id, today, m)} label="Foto" />}
+          />
+          {olderPhotos.length > 0 && (
+            <>
+              <div className="label-title" style={{ marginTop: 14 }}>Fotos anteriores</div>
+              <MediaGrid ids={olderPhotos.map((x) => x.id)} onDelete={(mid) => { const o = olderPhotos.find((x) => x.id === mid); if (o) removeHabitPhoto(habit.id, o.day, mid) }} />
+            </>
+          )}
+        </div>
+
+        <div className="card">
+          <div className="label-title" style={{ marginBottom: 12 }}>Historial</div>
           <Heatmap
             today={today}
             weeks={20}
@@ -109,16 +135,16 @@ export function HabitDetail({ open, onClose, id }: { open: boolean; onClose: () 
           <div className="card flat stack-8">
             {habit.cue && (
               <p>
-                <span className="eyebrow">Disparador</span>
+                <b>Disparador</b>
                 <br />
                 {habit.cue}, haré: <b>{habit.name.toLowerCase()}</b>.
               </p>
             )}
             {habit.why && (
               <p>
-                <span className="eyebrow">Mi porqué</span>
+                <b>Mi porqué</b>
                 <br />
-                <span className="quote" style={{ fontSize: 16 }}>{habit.why}</span>
+                <span className="quote">{habit.why}</span>
               </p>
             )}
           </div>

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Plus, Phone, MessageCircle, Users, Video, Gift, Trash2, Cake } from 'lucide-react'
-import { useStore } from '../../store'
-import { useToday } from '../../lib/hooks'
-import { diffDays, relativeDay, MONTHS, type DateKey } from '../../lib/date'
-import { uid, cx } from '../../lib/util'
-import { EmojiPicker, Empty, Field, Sheet, Stepper } from '../../components/ui'
-import type { InteractionType, Person, RelationKind } from '../../store/types'
+import { useStore } from '../store'
+import { useToday } from '../lib/hooks'
+import { diffDays, relativeDay, MONTHS, type DateKey } from '../lib/date'
+import { uid, cx } from '../lib/util'
+import { EmojiPicker, Empty, Field, Sheet, Stepper } from '../components/ui'
+import { AddMedia, PersonFace } from '../components/MediaUI'
+import type { InteractionType, Person, RelationKind } from '../store/types'
 
 const KINDS: { v: RelationKind; label: string; emoji: string; cadence: number }[] = [
   { v: 'familia', label: 'Familia', emoji: '🏡', cadence: 7 },
@@ -58,10 +59,16 @@ export function People() {
   const newPerson = (): Person => ({ id: '', name: '', emoji: '🙂', kind: 'amistad', cadenceDays: 14, interactions: [], createdAt: today })
 
   return (
-    <div>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Mi gente</h1>
+          <p className="page-sub">{due.length ? `${due.length === 1 ? 'Una persona espera' : `${due.length} personas esperan`} noticias tuyas` : 'Cuida a quien te cuida'}</p>
+        </div>
+      </div>
       {people.length === 0 ? (
         <div className="card">
-          <Empty emoji="💞" title="Tu gente importa">
+          <Empty title="Tu gente importa">
             Añade a las personas que quieres cuidar. Alba te recordará cuándo hace tiempo que no hablan, para que ninguna relación se enfríe.
           </Empty>
           <button className="btn primary block" onClick={() => setEdit(newPerson())}>
@@ -81,8 +88,8 @@ export function People() {
                   const d = dueness(p, today)
                   return (
                     <div key={p.id} className="card pad-sm row">
-                      <button className="emoji-tile lg" onClick={() => setView(p.id)}>
-                        {p.emoji}
+                      <button onClick={() => setView(p.id)} aria-label={p.name}>
+                        <PersonFace photo={p.photo} emoji={p.emoji} size={52} />
                       </button>
                       <button className="grow" style={{ textAlign: 'left' }} onClick={() => setView(p.id)}>
                         <div className="bold">{p.name}</div>
@@ -104,7 +111,9 @@ export function People() {
               <div className="list">
                 {birthdays.map(({ p, d }) => (
                   <button key={p.id} className="list-item" onClick={() => setView(p.id)}>
-                    <span className="emoji-tile">🎂</span>
+                    <span className="icon-tile c-chicle" style={{ background: 'var(--c-soft)', color: 'var(--c-deep)' }}>
+                      <Cake size={20} />
+                    </span>
                     <span className="grow bold">{p.name}</span>
                     <span className={cx('small bold', d === 0 ? 'person-ok' : 'muted')}>{d === 0 ? '¡Hoy!' : d === 1 ? 'Mañana' : `En ${d} días`}</span>
                   </button>
@@ -115,7 +124,7 @@ export function People() {
 
           <section className="section">
             <div className="section-head">
-              <h2 className="section-title">Mi gente</h2>
+              <h2 className="section-title">Todos</h2>
               <button className="section-link" onClick={() => setEdit(newPerson())}>
                 Añadir
               </button>
@@ -126,7 +135,7 @@ export function People() {
                 const kind = KINDS.find((k) => k.v === p.kind)
                 return (
                   <button key={p.id} className="list-item" onClick={() => setView(p.id)}>
-                    <span className="emoji-tile">{p.emoji}</span>
+                    <PersonFace photo={p.photo} emoji={p.emoji} size={42} />
                     <span className="grow" style={{ minWidth: 0 }}>
                       <span className="bold ellipsis" style={{ display: 'block' }}>
                         {p.name}
@@ -187,7 +196,7 @@ function PersonView({ id, onClose, onEdit }: { id: string | null; onClose: () =>
       onClose={onClose}
       title={
         <span className="row">
-          <span className="emoji-tile">{p.emoji}</span>
+          <PersonFace photo={p.photo} emoji={p.emoji} size={40} />
           {p.name}
         </span>
       }
@@ -214,7 +223,7 @@ function PersonView({ id, onClose, onEdit }: { id: string | null; onClose: () =>
           </div>
         </div>
         {p.notes && <div className="card flat small" style={{ whiteSpace: 'pre-wrap' }}>{p.notes}</div>}
-        <div className="eyebrow">Registrar un momento</div>
+        <div className="label-title">Registrar un momento</div>
         <input className="input" placeholder="¿De qué hablaron? (opcional)" value={note} onChange={(e) => setNote(e.target.value)} />
         <div className="grid-3" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
           {ACTIONS.map((a) => (
@@ -236,15 +245,18 @@ function PersonView({ id, onClose, onEdit }: { id: string | null; onClose: () =>
         </div>
         {p.interactions.length > 0 && (
           <>
-            <div className="eyebrow" style={{ marginTop: 8 }}>
-              Historial
-            </div>
+            <h3 className="label-title" style={{ marginTop: 16 }}>Historial</h3>
             <div className="list">
               {p.interactions.slice(0, 30).map((i) => (
                 <div key={i.id} className="list-item">
-                  <span className="emoji-tile" style={{ fontSize: 16 }}>
-                    {{ llamada: '📞', mensaje: '💬', 'en persona': '🫂', videollamada: '🎥', detalle: '🎁' }[i.type]}
-                  </span>
+                  {(() => {
+                    const A = ACTIONS.find((x) => x.t === i.type) ?? ACTIONS[0]
+                    return (
+                      <span className="icon-tile c-chicle" style={{ background: 'var(--c-soft)', color: 'var(--c-deep)' }}>
+                        <A.icon size={18} />
+                      </span>
+                    )
+                  })()}
                   <span className="grow" style={{ minWidth: 0 }}>
                     <span className="bold" style={{ display: 'block', textTransform: 'capitalize' }}>
                       {i.type}
@@ -270,6 +282,8 @@ function PersonEditor({ person, onClose }: { person: Person | null; onClose: () 
   const del = useStore((s) => s.deletePerson)
   const [p, setP] = useState<Person | null>(null)
   const [emojiOpen, setEmojiOpen] = useState(false)
+  const addMedia = useStore((s) => s.addMedia)
+  const deleteMedia = useStore((s) => s.deleteMedia)
   const [confirm, setConfirm] = useState(false)
   useEffect(() => {
     setP(person)
@@ -297,10 +311,18 @@ function PersonEditor({ person, onClose }: { person: Person | null; onClose: () 
       {p && (
         <div className="stack-12">
           <div className="row">
-            <button className="emoji-tile xl" onClick={() => setEmojiOpen((x) => !x)}>
-              {p.emoji}
+            <button onClick={() => setEmojiOpen((x) => !x)} aria-label="Cambiar emoji">
+              <PersonFace photo={p.photo} emoji={p.emoji} size={78} />
             </button>
             <input className="input big grow" placeholder="Nombre" value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} autoComplete="off" />
+          </div>
+          <div className="row">
+            <AddMedia purpose="person" className="media-add inline" label={p.photo ? 'Cambiar foto' : 'Poner foto'} onAdded={(m) => { addMedia(m); if (p.photo) deleteMedia(p.photo); setP({ ...p, photo: m.id }) }} />
+            {p.photo && (
+              <button className="btn ghost sm" onClick={() => { deleteMedia(p.photo!); setP({ ...p, photo: undefined }) }}>
+                Quitar foto
+              </button>
+            )}
           </div>
           {emojiOpen && <EmojiPicker value={p.emoji} onChange={(emoji) => setP({ ...p, emoji })} />}
           <Field label="Relación">

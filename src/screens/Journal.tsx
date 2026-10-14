@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowRight, Star, Trash2, X, CalendarClock, Sparkles } from 'lucide-react'
+import { ArrowRight, Star, Trash2, X, CalendarClock, Sparkles, Map as MapIcon } from 'lucide-react'
 import { useStore } from '../store'
 import { useUI } from '../store/ui'
 import { useToday } from '../lib/hooks'
 import { addDays, fromKey, lastNDays, prettyDate, relativeDay, startOfWeek, weekdayMon, WEEKDAYS_SHORT, type DateKey } from '../lib/date'
 import { PROMPTS } from '../lib/seed'
 import { seeded, cx } from '../lib/util'
-import { MoodPicker, MoodSheet, MOODS } from '../components/MoodSheet'
+import { MoodSheet, moodScore, moodSwatch } from '../components/MoodSheet'
+import { MoodSlider, moodFromScore } from '../components/MoodSlider'
+import { AddMedia, MediaGrid } from '../components/MediaUI'
 import { Sheet } from '../components/ui'
 import type { Bullet, BulletType } from '../store/types'
 
@@ -58,6 +60,8 @@ export function Journal() {
   const setJournal = useStore((s) => s.setJournal)
   const setMood = useStore((s) => s.setMood)
   const migrate = useStore((s) => s.migrateBullet)
+  const addJournalMedia = useStore((s) => s.addJournalMedia)
+  const removeJournalMedia = useStore((s) => s.removeJournalMedia)
   const open = useUI((s) => s.open)
   const [moodOpen, setMoodOpen] = useState(false)
 
@@ -78,10 +82,12 @@ export function Journal() {
     <div className="page">
       <div className="page-head">
         <div>
-          <div className="eyebrow">{relativeDay(day, today) === 'Hoy' ? 'Hoy' : relativeDay(day, today)}</div>
           <h1 className="page-title">Diario</h1>
+          <p className="page-sub">
+            {relativeDay(day, today) === 'Hoy' ? 'Hoy, ' : `${relativeDay(day, today)} · `}
+            {prettyDate(day).toLowerCase()}
+          </p>
         </div>
-        <span className="small muted bold">{prettyDate(day)}</span>
       </div>
 
       <div className="daystrip">
@@ -97,15 +103,15 @@ export function Journal() {
       {showReview && day === today && (
         <button
           className="card row section"
-          style={{ width: '100%', textAlign: 'left', background: reviewDone ? 'var(--good-soft)' : 'linear-gradient(135deg, var(--a-soft), var(--surface))' }}
+          style={{ width: '100%', textAlign: 'left', background: reviewDone ? 'var(--menta-soft)' : 'var(--uva-soft)' }}
           onClick={() => open({ type: 'review' })}
         >
-          <div className="emoji-tile lg" style={{ background: 'var(--surface)' }}>
-            🗺️
-          </div>
+          <span className="icon-tile" style={{ background: reviewDone ? 'var(--menta)' : 'var(--uva)', color: '#fff' }}>
+            <MapIcon size={20} />
+          </span>
           <div className="grow">
-            <div className="eyebrow">Revisión semanal</div>
-            <div className="bold">{reviewDone ? '¡Hecha! Toca para releerla.' : 'Cierra la semana con intención · +60 XP'}</div>
+            <div className="ritual-title">Revisión semanal</div>
+            <div className="small bold muted">{reviewDone ? '¡Hecha! Toca para releerla.' : 'Cierra la semana con intención · +60 XP'}</div>
           </div>
           <ArrowRight size={18} />
         </button>
@@ -121,14 +127,16 @@ export function Journal() {
       <section className="section">
         <div className="section-head">
           <h2 className="section-title">Ánimo</h2>
-          {mood && (
-            <button className="section-link" onClick={() => setMoodOpen(true)}>
-              Detalles
-            </button>
-          )}
+          <button className="section-link" onClick={() => setMoodOpen(true)}>
+            Detalles
+          </button>
         </div>
-        <div className="card pad-sm">
-          <MoodPicker value={mood?.value} onPick={(v) => setMood(day, { value: v, tags: mood?.tags ?? [], note: mood?.note })} />
+        <div className="mood-card" style={{ ['--mood' as string]: moodSwatch(mood) }}>
+          <MoodSlider
+            key={day}
+            score={moodScore(mood)}
+            onCommit={(sc) => setMood(day, { value: moodFromScore(sc).value, score: sc, tags: mood?.tags ?? [], note: mood?.note })}
+          />
           {mood && mood.tags.length > 0 && (
             <div className="chips wrap" style={{ marginTop: 10 }}>
               {mood.tags.map((t) => (
@@ -140,7 +148,14 @@ export function Journal() {
           )}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(30, 1fr)', gap: 2, marginTop: 14 }} aria-label="Ánimo de los últimos 30 días">
             {moodMonth.map((d) => (
-              <span key={d} title={d} style={{ height: 18, borderRadius: 4, background: moods[d] ? MOODS[moods[d].value - 1].color : 'var(--surface-3)' }} />
+              <motion.span
+                key={d}
+                title={d}
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ delay: 0.01 * moodMonth.indexOf(d), type: 'spring', stiffness: 300, damping: 20 }}
+                style={{ height: 18, borderRadius: 5, transformOrigin: 'bottom', background: moodSwatch(moods[d]) ?? 'color-mix(in oklab, var(--ink) 8%, transparent)' }}
+              />
             ))}
           </div>
           <div className="row-between tiny muted" style={{ marginTop: 4 }}>
@@ -152,13 +167,25 @@ export function Journal() {
 
       <section className="section">
         <div className="section-head">
+          <h2 className="section-title">Momentos</h2>
+          <span className="small muted">fotos y videos cortos</span>
+        </div>
+        <MediaGrid
+          ids={entry.media ?? []}
+          onDelete={(id) => removeJournalMedia(day, id)}
+          add={<AddMedia purpose="moment" videos multiple onAdded={(m) => addJournalMedia(day, m)} label="Añadir" />}
+        />
+      </section>
+
+      <section className="section">
+        <div className="section-head">
           <h2 className="section-title">Gratitud</h2>
           <span className="small muted">3 cosas · +15 XP</span>
         </div>
         <div className="stack-8">
           {gratitude.map((g, i) => (
             <div key={`${day}-${i}`} className="row">
-              <span className="display" style={{ width: 22, fontSize: 20, color: 'var(--a1)', fontWeight: 700 }}>
+              <span className="display" style={{ width: 22, fontSize: '1.3rem', color: 'var(--chicle)' }}>
                 {i + 1}
               </span>
               <div className="grow">
@@ -184,7 +211,7 @@ export function Journal() {
           <span className="small muted">• tarea ○ evento – nota</span>
         </div>
         {pendingOld.length > 0 && day === today && (
-          <div className="card flat row" style={{ marginBottom: 10 }}>
+          <div className="card row" style={{ marginBottom: 10 }}>
             <CalendarClock size={20} />
             <div className="grow small">
               <b>{pendingOld.length} tareas abiertas</b> de días anteriores. ¿Las migras a hoy?
@@ -204,18 +231,18 @@ export function Journal() {
           <h2 className="section-title">Reflexión</h2>
           <span className="small muted">+20 XP</span>
         </div>
-        <div className="card flat" style={{ marginBottom: 10 }}>
+        <div className="card" style={{ marginBottom: 10, background: 'var(--uva-soft)' }}>
           <div className="row">
-            <Sparkles size={18} color="var(--a1)" />
-            <span className="quote" style={{ fontSize: 16 }}>
+            <Sparkles size={18} color="var(--uva)" />
+            <span className="quote">
               {prompt}
             </span>
           </div>
         </div>
         <div className="stack-8">
           <AutoText key={`ref-${day}`} multiline rows={5} value={entry.reflection ?? ''} onSave={(v) => setJournal(day, { reflection: v })} placeholder="Escribe sin filtro. Nadie más lo va a leer." />
-          <AutoText key={`hl-${day}`} value={entry.highlight ?? ''} onSave={(v) => setJournal(day, { highlight: v })} placeholder="✨ El mejor momento del día" />
-          <AutoText key={`ls-${day}`} value={entry.lesson ?? ''} onSave={(v) => setJournal(day, { lesson: v })} placeholder="📌 Una lección que me llevo" />
+          <AutoText key={`hl-${day}`} value={entry.highlight ?? ''} onSave={(v) => setJournal(day, { highlight: v })} placeholder="El mejor momento del día" />
+          <AutoText key={`ls-${day}`} value={entry.lesson ?? ''} onSave={(v) => setJournal(day, { lesson: v })} placeholder="Una lección que me llevo" />
         </div>
       </section>
 
@@ -345,7 +372,7 @@ export function ReviewSheet({ open, onClose }: { open: boolean; onClose: () => v
     >
       <div className="stack-12">
         <p className="muted small">Cinco minutos para mirar atrás y elegir hacia dónde ir. Es el hábito que alimenta a todos los demás.</p>
-        <div className="eyebrow">¿Cómo fue tu semana?</div>
+        <div className="label-title">¿Cómo fue tu semana?</div>
         <div className="row" style={{ justifyContent: 'center', gap: 6 }}>
           {[1, 2, 3, 4, 5].map((n) => (
             <motion.button key={n} whileTap={{ scale: 0.85 }} onClick={() => setRating(n)} aria-label={`${n} estrellas`}>

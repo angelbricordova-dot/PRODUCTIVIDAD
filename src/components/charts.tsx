@@ -6,7 +6,7 @@ export function Heatmap({
   today,
   weeks = 18,
   value,
-  color = 'var(--a1)',
+  color = 'var(--a)',
 }: {
   today: DateKey
   weeks?: number
@@ -104,8 +104,8 @@ export function Radar({ items, size = 260 }: { items: { label: string; emoji: st
     <svg viewBox={`0 0 ${size} ${size}`} width="100%" style={{ maxWidth: size, display: 'block', margin: '0 auto', overflow: 'visible' }}>
       <defs>
         <linearGradient id="radarG" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--a1)" stopOpacity="0.55" />
-          <stop offset="1" stopColor="var(--a2)" stopOpacity="0.4" />
+          <stop offset="0" stopColor="var(--a)" stopOpacity="0.55" />
+          <stop offset="1" stopColor="var(--girasol)" stopOpacity="0.4" />
         </linearGradient>
       </defs>
       {[0.25, 0.5, 0.75, 1].map((f) => (
@@ -118,7 +118,7 @@ export function Radar({ items, size = 260 }: { items: { label: string; emoji: st
       <motion.polygon
         points={poly((i) => R * Math.max(0.08, items[i].value))}
         fill="url(#radarG)"
-        stroke="var(--a1)"
+        stroke="var(--a)"
         strokeWidth={2}
         strokeLinejoin="round"
         initial={{ opacity: 0, scale: 0.6 }}

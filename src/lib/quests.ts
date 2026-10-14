@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react'
+import { Sunrise, Smile, Heart, Target, Gem, ListChecks, Timer, Wind, Users, Camera, PenLine, CheckSquare } from 'lucide-react'
 import type { AppData } from '../store/types'
 import type { DateKey } from './date'
 import { dayStats, isDone, showsOn } from './habits'
@@ -6,7 +8,8 @@ import { seeded } from './util'
 export interface Quest {
   id: string
   title: string
-  emoji: string
+  icon: LucideIcon
+  color: 'mandarina' | 'girasol' | 'cielo' | 'menta' | 'chicle' | 'uva'
   /** progreso 0..1 */
   progress: (d: AppData, day: DateKey) => number
   available?: (d: AppData, day: DateKey) => boolean
@@ -19,53 +22,53 @@ export const QUEST_POOL: Quest[] = [
   {
     id: 'morning',
     title: 'Completa tu ritual de mañana',
-    emoji: '🌅',
+    icon: Sunrise, color: 'mandarina',
     available: (d, day) => morningHabits(d, day).length > 0,
     progress: (d, day) => {
       const list = morningHabits(d, day)
       return list.length ? list.filter((h) => isDone(h, d.logs, day)).length / list.length : 0
     },
   },
-  { id: 'mood', title: 'Registra cómo te sientes', emoji: '🌈', progress: (d, day) => (d.moods[day] ? 1 : 0) },
+  { id: 'mood', title: 'Registra cómo te sientes', icon: Smile, color: 'uva', progress: (d, day) => (d.moods[day] ? 1 : 0) },
   {
     id: 'gratitude',
     title: 'Escribe 3 gratitudes',
-    emoji: '🙏',
+    icon: Heart, color: 'chicle',
     progress: (d, day) => Math.min(1, (d.journal[day]?.gratitude ?? []).filter((g) => g.trim()).length / 3),
   },
-  { id: 'intention', title: 'Define tu intención del día', emoji: '🎯', progress: (d, day) => ((d.journal[day]?.intention ?? '').trim().length >= 3 ? 1 : 0) },
+  { id: 'intention', title: 'Define tu intención del día', icon: Target, color: 'cielo', progress: (d, day) => ((d.journal[day]?.intention ?? '').trim().length >= 3 ? 1 : 0) },
   {
     id: 'perfect',
     title: 'Día perfecto: todos tus hábitos',
-    emoji: '💎',
+    icon: Gem, color: 'uva',
     available: (d, day) => dayStats(d.habits, d.logs, day).total >= 3,
     progress: (d, day) => dayStats(d.habits, d.logs, day).ratio,
   },
   {
     id: 'three',
     title: 'Completa 3 hábitos',
-    emoji: '✅',
+    icon: ListChecks, color: 'menta',
     progress: (d, day) => Math.min(1, d.habits.filter((h) => isDone(h, d.logs, day)).length / 3),
   },
   {
     id: 'focus',
     title: 'Haz 25 minutos de enfoque',
-    emoji: '⏱️',
+    icon: Timer, color: 'mandarina',
     progress: (d, day) => Math.min(1, d.focus.filter((f) => f.date === day && f.kind === 'focus').reduce((a, f) => a + f.minutes, 0) / 25),
   },
-  { id: 'breath', title: 'Respira con calma un momento', emoji: '🌬️', progress: (d, day) => (d.focus.some((f) => f.date === day && f.kind === 'breath') ? 1 : 0) },
+  { id: 'breath', title: 'Respira con calma un momento', icon: Wind, color: 'cielo', progress: (d, day) => (d.focus.some((f) => f.date === day && f.kind === 'breath') ? 1 : 0) },
   {
     id: 'connect',
     title: 'Conecta con alguien importante',
-    emoji: '💞',
+    icon: Users, color: 'chicle',
     progress: (d, day) => (d.people.some((p) => p.interactions.some((i) => i.date === day)) ? 1 : 0),
   },
-  { id: 'moment', title: 'Guarda una foto del día', emoji: '📸', progress: (d, day) => ((d.journal[day]?.media ?? []).length ? 1 : 0) },
-  { id: 'reflect', title: 'Escribe tu reflexión del día', emoji: '✍️', progress: (d, day) => Math.min(1, (d.journal[day]?.reflection ?? '').trim().length / 40) },
+  { id: 'moment', title: 'Guarda una foto del día', icon: Camera, color: 'girasol', progress: (d, day) => ((d.journal[day]?.media ?? []).length ? 1 : 0) },
+  { id: 'reflect', title: 'Escribe tu reflexión del día', icon: PenLine, color: 'uva', progress: (d, day) => Math.min(1, (d.journal[day]?.reflection ?? '').trim().length / 40) },
   {
     id: 'bullets',
     title: 'Tacha 2 tareas de tu bitácora',
-    emoji: '📌',
+    icon: CheckSquare, color: 'menta',
     available: (d, day) => d.bullets.filter((b) => b.date === day && b.type === 'task').length >= 2,
     progress: (d, day) => Math.min(1, d.bullets.filter((b) => b.date === day && b.type === 'task' && b.status === 'done').length / 2),
   },

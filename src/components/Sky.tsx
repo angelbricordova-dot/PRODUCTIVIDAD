@@ -2,37 +2,38 @@ import { useMemo, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import type { DayPart } from '../lib/date'
 import { seeded } from '../lib/util'
+import { AlbaSun } from './Alba'
 
 const SKIES: Record<DayPart, { bg: string; light: boolean; hill1: string; hill2: string }> = {
   dawn: {
     bg: 'linear-gradient(180deg, #4a3b8f 0%, #b45e9a 42%, #ff9a7a 78%, #ffcf8f 100%)',
     light: false,
-    hill1: 'rgba(255, 214, 190, 0.55)',
-    hill2: 'rgba(255, 190, 170, 0.5)',
+    hill1: '#e9849a',
+    hill2: '#f6a58e',
   },
   morning: {
     bg: 'linear-gradient(180deg, #7cc4ff 0%, #a9dcff 40%, #ffe3b8 85%, #ffd09a 100%)',
     light: true,
-    hill1: 'rgba(255, 255, 255, 0.5)',
-    hill2: 'rgba(255, 236, 210, 0.6)',
+    hill1: '#a7dbff',
+    hill2: '#ffd59a',
   },
   afternoon: {
     bg: 'linear-gradient(180deg, #ffb35c 0%, #ff8e6e 45%, #ffb98a 80%, #ffd7a6 100%)',
     light: false,
-    hill1: 'rgba(255, 230, 200, 0.5)',
-    hill2: 'rgba(255, 210, 180, 0.55)',
+    hill1: '#ff9f6e',
+    hill2: '#ffc48f',
   },
   dusk: {
     bg: 'linear-gradient(180deg, #2c2463 0%, #7c3f8f 40%, #f06b7a 75%, #ffae7a 100%)',
     light: false,
-    hill1: 'rgba(240, 150, 160, 0.45)',
-    hill2: 'rgba(200, 120, 160, 0.45)',
+    hill1: '#b05a92',
+    hill2: '#e47486',
   },
   night: {
     bg: 'linear-gradient(180deg, #0d0b2a 0%, #1d1850 45%, #3a2a6e 85%, #4d3577 100%)',
     light: false,
-    hill1: 'rgba(120, 100, 190, 0.35)',
-    hill2: 'rgba(90, 70, 160, 0.4)',
+    hill1: '#3a2f78',
+    hill2: '#4a3a8a',
   },
 }
 
@@ -47,7 +48,7 @@ function celestial(now: Date) {
   return { isSun, x, y }
 }
 
-export function Sky({ part, now, children }: { part: DayPart; now: Date; children: ReactNode }) {
+export function Sky({ part, now, joy = 0.6, children }: { part: DayPart; now: Date; joy?: number; children: ReactNode }) {
   const sky = SKIES[part]
   const { isSun, x, y } = celestial(now)
   const stars = useMemo(() => {
@@ -88,31 +89,17 @@ export function Sky({ part, now, children }: { part: DayPart; now: Date; childre
             />
           ))}
       </svg>
-      {/* Sol / luna en un elemento propio para que no se deforme con preserveAspectRatio */}
+      {/* Alba, la mascota: recorre el cielo durante el día y sonríe más cuanto más avanzas */}
       <motion.div
         aria-hidden
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.2, ease: [0.23, 1, 0.32, 1] }}
-        style={{
-          position: 'absolute',
-          left: `${x}%`,
-          top: `${y}%`,
-          width: isSun ? 74 : 54,
-          height: isSun ? 74 : 54,
-          marginLeft: isSun ? -37 : -27,
-          marginTop: isSun ? -37 : -27,
-          zIndex: -1,
-          borderRadius: '50%',
-          background: isSun
-            ? 'radial-gradient(circle at 40% 38%, #fffbe6, #ffe28a 55%, #ffb547)'
-            : 'radial-gradient(circle at 38% 35%, #fffdf2, #e8e0ff 70%)',
-          boxShadow: isSun
-            ? '0 0 50px 18px rgba(255, 220, 140, 0.55), 0 0 120px 40px rgba(255, 200, 120, 0.3)'
-            : '0 0 40px 10px rgba(220, 210, 255, 0.35), inset -10px -6px 0 rgba(160, 140, 220, 0.25)',
-          animation: 'floaty 7s ease-in-out infinite alternate',
-        }}
-      />
+        className="sky-mascot"
+        initial={{ opacity: 0, y: 30, scale: 0.6 }}
+        animate={{ opacity: 1, y: [0, -6, 0], scale: 1 }}
+        transition={{ opacity: { duration: 0.6 }, scale: { type: 'spring', stiffness: 160, damping: 14 }, y: { duration: 4, repeat: Infinity, ease: 'easeInOut' } }}
+        style={{ left: `${x}%`, top: `${y}%`, marginLeft: -48, marginTop: -48 }}
+      >
+        <AlbaSun size={96} joy={joy} night={!isSun} />
+      </motion.div>
       {!showStars && (
         <>
           <div className="cloud" style={{ top: '22%', animationDuration: '70s' }} />

@@ -10,7 +10,8 @@ import type { DateKey } from '../lib/date'
 import { cx } from '../lib/util'
 import { Ring } from './ui'
 
-const PARTICLES = 10
+const PARTICLES = 12
+const BURST_COLORS = ['var(--girasol)', 'var(--chicle)', 'var(--cielo)']
 
 export function HabitRow({ habit, day }: { habit: Habit; day: DateKey }) {
   const logs = useStore((s) => s.logs)
@@ -25,7 +26,7 @@ export function HabitRow({ habit, day }: { habit: Habit; day: DateKey }) {
   const longPressed = useRef(false)
 
   const area = areas.find((a) => a.id === habit.areaId)
-  const color = area?.color ?? 'var(--a1)'
+  const color = area?.color ?? 'var(--a)'
   const count = countOn(logs, habit.id, day)
   const done = isDone(habit, logs, day)
   const streak = habitStreak(habit, logs, restDays, day)
@@ -71,9 +72,9 @@ export function HabitRow({ habit, day }: { habit: Habit; day: DateKey }) {
   return (
     <div className={cx('habit', done && 'done')} style={{ ['--hc' as string]: color }}>
       <button className="h-main" onClick={() => open({ type: 'habitDetail', id: habit.id })}>
-        <div className="emoji-tile" style={{ background: `color-mix(in oklab, ${color} 16%, var(--surface))` }}>
+        <motion.div className="h-emoji" animate={done ? { rotate: [0, -12, 10, 0], scale: [1, 1.15, 1] } : {}} transition={{ duration: 0.5 }}>
           {habit.emoji}
-        </div>
+        </motion.div>
         <div className="grow">
           <div className="h-name">{habit.name}</div>
           <div className="h-meta">
@@ -162,7 +163,7 @@ function Burst({ active, color }: { active: boolean; color: string }) {
         return (
           <motion.i
             key={i}
-            style={{ background: i % 2 ? color : 'var(--a2)' }}
+            style={{ background: i % 2 ? color : BURST_COLORS[i % 3], borderRadius: i % 3 ? 3 : 99 }}
             initial={{ x: 0, y: 0, scale: 1, opacity: 1 }}
             animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, scale: 0, opacity: 0 }}
             transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}

@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from './store'
 import { useUI } from './store/ui'
 import { setSoundEnabled } from './lib/feedback'
+import { applyFont } from './lib/fonts'
 import { questsFor } from './lib/quests'
 import { ACHIEVEMENTS, makeCtx } from './lib/achievements'
 import { todayKey } from './lib/date'
@@ -17,7 +18,7 @@ import { RitualPlayer } from './components/RitualPlayer'
 import { Today } from './screens/Today'
 import { Habits } from './screens/Habits'
 import { Journal, ReviewSheet } from './screens/Journal'
-import { Life } from './screens/Life'
+import { People } from './screens/People'
 import { Me } from './screens/Me'
 import { Onboarding } from './screens/Onboarding'
 
@@ -25,7 +26,12 @@ function useTheme() {
   const theme = useStore((s) => s.profile.theme)
   const accent = useStore((s) => s.profile.accent)
   const sound = useStore((s) => s.profile.sound)
+  const font = useStore((s) => s.profile.font)
+  const textScale = useStore((s) => s.profile.textScale)
   useEffect(() => setSoundEnabled(sound), [sound])
+  useEffect(() => {
+    void applyFont(font, textScale)
+  }, [font, textScale])
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
@@ -33,7 +39,7 @@ function useTheme() {
       const root = document.documentElement
       root.dataset.theme = dark ? 'dark' : 'light'
       root.dataset.accent = accent
-      const color = dark ? '#120F24' : '#FBF4EA'
+      const color = dark ? '#13112a' : '#f3f1fb'
       document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', color))
     }
     apply()
@@ -59,11 +65,11 @@ function useGameEngine() {
       const fresh = useStore.getState()
       const ctx = makeCtx(fresh, day)
       for (const a of ACHIEVEMENTS) {
-        if (!fresh.achievements[a.id] && a.check(fresh, ctx)) fresh.unlockAchievement(a.id, a.title, a.emoji, a.xp)
+        if (!fresh.achievements[a.id] && a.check(fresh, ctx)) fresh.unlockAchievement(a.id)
       }
     }
     const unsub = useStore.subscribe((s, prev) => {
-      if (s.events === prev.events && s.logs === prev.logs && s.journal === prev.journal && s.moods === prev.moods && s.bullets === prev.bullets && s.people === prev.people && s.transactions === prev.transactions && s.focus === prev.focus && s.savings === prev.savings && s.goals === prev.goals && s.redemptions === prev.redemptions && s.reviews === prev.reviews) return
+      if (s.events === prev.events && s.logs === prev.logs && s.journal === prev.journal && s.moods === prev.moods && s.bullets === prev.bullets && s.people === prev.people && s.media === prev.media && s.habitPhotos === prev.habitPhotos && s.focus === prev.focus && s.goals === prev.goals && s.redemptions === prev.redemptions && s.reviews === prev.reviews) return
       clearTimeout(t)
       t = window.setTimeout(check, 450)
     })
@@ -114,7 +120,7 @@ export default function App() {
           {tab === 'hoy' && <Today />}
           {tab === 'habitos' && <Habits />}
           {tab === 'diario' && <Journal />}
-          {tab === 'vida' && <Life />}
+          {tab === 'gente' && <People />}
           {tab === 'yo' && <Me />}
         </motion.main>
       </AnimatePresence>

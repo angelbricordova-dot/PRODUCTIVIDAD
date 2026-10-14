@@ -701,3 +701,11 @@ button.list-item:active { background: var(--surface-2); }
 @media (min-width: 600px) {
   :root { --page-x: 26px; }
 }
+
+/* ficha de jugador */
+.player-card { background: var(--uva-soft); }
+.player-level {
+  position: absolute; right: -6px; bottom: -4px; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 99px;
+  display: grid; place-items: center; background: var(--uva); color: #fff; font-size: 1.05rem; box-shadow: 0 3px 0 var(--uva-deep), 0 0 0 3px var(--uva-soft);
+}
+.player-card .avatar { box-shadow: 0 0 0 4px var(--surface); }

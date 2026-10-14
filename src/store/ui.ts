@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { LucideIcon } from 'lucide-react'
 import { uid } from '../lib/util'
 
 export interface Toast {
@@ -6,6 +7,7 @@ export interface Toast {
   title: string
   subtitle?: string
   emoji?: string
+  icon?: LucideIcon
   xp?: number
   coins?: number
   tone?: 'xp' | 'info' | 'achievement' | 'warn'
@@ -16,10 +18,12 @@ export interface Celebration {
   title: string
   subtitle?: string
   emoji?: string
+  icon?: LucideIcon
+  color?: string
   level?: number
 }
 
-export type Tab = 'hoy' | 'habitos' | 'diario' | 'vida' | 'yo'
+export type Tab = 'hoy' | 'habitos' | 'diario' | 'gente' | 'yo'
 
 export type Overlay =
   | { type: 'ritual'; part: 'morning' | 'afternoon' | 'evening' | 'anytime' }
